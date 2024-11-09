@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import com.qualcomm.robotcore.hardware.DcMotor
 import com.qualcomm.robotcore.hardware.DcMotorSimple
-import com.qualcomm.robotcore.hardware.Servo
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
@@ -19,11 +18,6 @@ class MainTeleOp : OpMode() {
     private lateinit var motorFrontRight: DcMotor
     private lateinit var motorBackRight: DcMotor
     private lateinit var imu: BNO055IMU
-    private lateinit var armClaw: Servo
-    private lateinit var armRotationMotor: DcMotor
-    private lateinit var armExtensionMotor: DcMotor
-    private lateinit var hangingArm: DcMotorSimple
-    private var reachedArmExtensionLimit = false
 
     // Variables for scaling and gamepad state
     private var speedModes = doubleArrayOf(0.3, 0.55, 0.8, 1.0)
@@ -40,15 +34,9 @@ class MainTeleOp : OpMode() {
         motorBackLeft = hardwareMap.dcMotor["LR"]
         motorFrontRight = hardwareMap.dcMotor["RF"]
         motorBackRight = hardwareMap.dcMotor["RR"]
-        armClaw = hardwareMap.servo["claw_grab"]
-        armRotationMotor = hardwareMap.dcMotor["arm_rotation"]
-        armExtensionMotor = hardwareMap.dcMotor["arm_extension"]
-        hangingArm = hardwareMap.dcMotor["hanging"]
 
-
-        armClaw.scaleRange(-0.1, 0.1)
         // Set all motors to run using encoders
-        val motors = arrayOf(motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor)
+        val motors = arrayOf(motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight)
         for (motor in motors) {
             motor.mode = DcMotor.RunMode.RUN_USING_ENCODER
         }
@@ -66,56 +54,6 @@ class MainTeleOp : OpMode() {
     }
 
     override fun loop() {
-        //ARM ROTATION
-        if (gamepad2.dpad_down) {
-            armRotationMotor.targetPosition = 1100
-            armRotationMotor.power = 0.5
-            armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-            //DOWN HAS POWER NEGATIVE
-        }
-        if (gamepad2.dpad_up) {
-            armRotationMotor.targetPosition = 20
-            armRotationMotor.power = -0.6
-            armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-        }
-        // ARM ROTATION WITH JOYSTICK
-        //arm rotation joystick
-        if (gamepad2.left_stick_y != 0f) {
-
-            val currentArmRotation = armRotationMotor.currentPosition + (gamepad2.left_stick_y * -5).toInt()
-            armRotationMotor.targetPosition = currentArmRotation
-            armRotationMotor.power = 0.1
-            armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-            //
-        }
-        //ARM EXTENSION
-        if (gamepad2.right_stick_y != 0f) {
-            armRotationMotor.targetPosition = armExtensionMotor.currentPosition + gamepad2.right_stick_y.toInt() * -5
-            armRotationMotor.power = -gamepad1.left_stick_y.toDouble()
-            //goes up is ________
-            //goes down is ___________
-            armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-        }
-
-
-        // CLAW
-        if (gamepad2.x) {
-            armClaw.setPosition(0.0)
-        }
-        if (gamepad2.b) {
-            armClaw.setPosition(0.3)
-        }
-
-        //HANGING
-        if (gamepad2.right_bumper){hangingArm.setPower(1.0);}
-        else if (gamepad2.left_bumper) {hangingArm.setPower(-1.0);}
-        else {hangingArm.setPower(0.0);}
-
-
-
-
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////
         // Update speed mode based on D-pad input
         val currentDpadUp = gamepad1.dpad_up
         val currentDpadDown = gamepad1.dpad_down
@@ -188,6 +126,5 @@ class MainTeleOp : OpMode() {
         telemetry.addData("Turbo Mode", if (isTurboMode) "ON" else "OFF")
         telemetry.addData("Heading", Math.toDegrees(botHeadingRadians))
         telemetry.update()
-
     }
 }
