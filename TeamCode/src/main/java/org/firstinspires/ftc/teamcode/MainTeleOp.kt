@@ -81,12 +81,13 @@ class MainTeleOp : OpMode() {
         // ARM ROTATION WITH JOYSTICK
         //arm rotation joystick
         if (gamepad2.left_stick_y != 0f) {
-
-            val currentArmRotation = armRotationMotor.currentPosition + (gamepad2.left_stick_y * -5).toInt()
-            armRotationMotor.targetPosition = currentArmRotation
-            armRotationMotor.power = 0.1
+            armRotationMotor.targetPosition = 1200
+            armRotationMotor.power = 0.05 * gamepad2.left_stick_y
             armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
             //
+        }
+        else{
+            armRotationMotor.power = 0.0;
         }
         //ARM EXTENSION
         if (gamepad2.right_stick_y != 0f) {
