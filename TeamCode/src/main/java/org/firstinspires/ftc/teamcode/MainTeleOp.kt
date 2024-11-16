@@ -99,11 +99,11 @@ class MainTeleOp : OpMode() {
 
         //HANGING
         if (gamepad2.right_bumper){
-            hangingArm.targetPosition = 100;
+            hangingArm.targetPosition = hangingArm.currentPosition + 500;
             hangingArm.mode = DcMotor.RunMode.RUN_TO_POSITION
             hangingArm.power = 1.0
         } else if (gamepad2.left_bumper) {
-            hangingArm.targetPosition = 0;
+            hangingArm.targetPosition = hangingArm.currentPosition - 500;
             hangingArm.mode = DcMotor.RunMode.RUN_TO_POSITION
             hangingArm.power = 1.0
         }
