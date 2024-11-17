@@ -48,6 +48,7 @@ class MainTeleOp : OpMode() {
         val motors = arrayOf(motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor, hangingArm)
         for (motor in motors) {
             motor.mode = DcMotor.RunMode.RUN_USING_ENCODER
+            motor.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
         }
 
         // Reverse direction of left-side motors
@@ -76,17 +77,23 @@ class MainTeleOp : OpMode() {
         }
         //arm rotation joystick
         if (gamepad2.left_stick_y != 0f && !armRotationMotor.isBusy) {
-            val currentArmRotation = armRotationMotor.currentPosition + (gamepad2.left_stick_y * -10).toInt()
-            armRotationMotor.targetPosition = currentArmRotation
+            val currentArmRotation = armRotationMotor.currentPosition + (gamepad2.left_stick_y * 50).toInt()
+            armRotationMotor.targetPosition = currentArmRotation.coerceIn(0, 1050)
             armRotationMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-            armRotationMotor.power = 0.2
+            armRotationMotor.power = 0.8
         }
         //ARM EXTENSION
-        if (gamepad2.right_stick_y != 0f && !armExtensionMotor.isBusy) {
-            val currentArmExtension = armExtensionMotor.currentPosition + (gamepad2.right_stick_y * -10).toInt()
+        if (gamepad2.right_stick_y != 0f) {
+            // Calculate the desired new position
+            var currentArmExtension = armExtensionMotor.currentPosition + (gamepad2.right_stick_y * -80).toInt()
+
+            // Clamp the target position within the limits (0 to 1100)
+            currentArmExtension = currentArmExtension.coerceIn(0, 1100)
+
+            // Set the target position and configure the motor
             armExtensionMotor.targetPosition = currentArmExtension
             armExtensionMotor.mode = DcMotor.RunMode.RUN_TO_POSITION
-            armExtensionMotor.power = 0.5
+            armExtensionMotor.power = 1.0
         }
 
         // CLAW
@@ -98,12 +105,14 @@ class MainTeleOp : OpMode() {
         }
 
         //HANGING
-        if (gamepad2.right_bumper){
-            hangingArm.targetPosition = hangingArm.currentPosition + 500;
+        if (gamepad2.right_bumper) {
+            val newpos =  (hangingArm.currentPosition + 700).coerceIn(-20500, 0)
+
+            hangingArm.targetPosition = newpos
             hangingArm.mode = DcMotor.RunMode.RUN_TO_POSITION
             hangingArm.power = 1.0
         } else if (gamepad2.left_bumper) {
-            hangingArm.targetPosition = hangingArm.currentPosition - 500;
+            hangingArm.targetPosition = -20500
             hangingArm.mode = DcMotor.RunMode.RUN_TO_POSITION
             hangingArm.power = 1.0
         }
@@ -130,21 +139,35 @@ class MainTeleOp : OpMode() {
 
         val speedScale = speedModes[currentSpeedModeIndex]
 
-        // Read joystick values
+        val forwardTrigger = gamepad1.right_trigger.toDouble()
+        val backwardTrigger = gamepad1.left_trigger.toDouble()
+
+        var botOrientedY = 0.0
+        if (forwardTrigger > 0) {
+            botOrientedY = forwardTrigger
+        } else if (backwardTrigger > 0) {
+            botOrientedY = -backwardTrigger
+        }
+
+        // NORMAL FIELD-ORIENTED JOYSTICK MOVEMENT
         val y = -gamepad1.left_stick_y.toDouble()
         val x = gamepad1.left_stick_x.toDouble() * 1.1
         val rx = gamepad1.right_stick_x.toDouble()
 
         val botHeadingRadians = -(imu.angularOrientation.firstAngle.toDouble())
 
+        // Apply field-centric transformation for joystick movement
         val rotX = x * cos(botHeadingRadians) - y * sin(botHeadingRadians)
         val rotY = x * sin(botHeadingRadians) + y * cos(botHeadingRadians)
 
-        val denominator = max(abs(rotY) + abs(rotX) + abs(rx), 1.0)
-        var frontLeftPower = (rotY + rotX + rx) / denominator
-        var backLeftPower = (rotY - rotX + rx) / denominator
-        var frontRightPower = (rotY - rotX - rx) / denominator
-        var backRightPower = (rotY + rotX - rx) / denominator
+        // Combine bot-oriented trigger control with field-oriented joystick control
+        val finalY = if (botOrientedY != 0.0) botOrientedY else rotY
+
+        val denominator = max(abs(finalY) + abs(rotX) + abs(rx), 1.0)
+        var frontLeftPower = (finalY + rotX + rx) / denominator
+        var backLeftPower = (finalY - rotX + rx) / denominator
+        var frontRightPower = (finalY - rotX - rx) / denominator
+        var backRightPower = (finalY + rotX - rx) / denominator
 
         val isTurboMode = gamepad1.right_bumper
         val adjustedSpeedScale = if (isTurboMode) 1.0 else speedScale
@@ -177,4 +200,5 @@ class MainTeleOp : OpMode() {
         telemetry.addData("Heading", Math.toDegrees(botHeadingRadians))
         telemetry.update()
     }
+
 }
