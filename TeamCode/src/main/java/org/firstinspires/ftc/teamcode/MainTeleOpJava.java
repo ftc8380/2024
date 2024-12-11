@@ -10,25 +10,20 @@ import com.qualcomm.robotcore.hardware.Servo;
 import java.util.Arrays;
 import java.util.List;
 
-@TeleOp(name = "MainTeleOpJava", group = "Main")
+@TeleOp
 public class MainTeleOpJava extends OpMode {
     // Declare hardware variables
-    private DcMotor motorFrontLeft;
-    private DcMotor motorBackLeft;
-    private DcMotor motorFrontRight;
-    private DcMotor motorBackRight;
+    private DcMotor motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor, hangingArm;
     private BNO055IMU imu;
-
     private Servo armClaw;
-    private DcMotor armRotationMotor;
-    private DcMotor armExtensionMotor;
-    private DcMotor hangingArm;
 
     // Variables for scaling and gamepad state
     private double[] speedModes = {0.3, 0.55, 0.8, 1.0};
     private int currentSpeedModeIndex = 1; // default to 0.55
     private boolean prevDpadUp = false;
     private boolean prevDpadDown = false;
+
+    int maxExtension = 1100;
 
     @Override
     public void init() {
@@ -68,33 +63,36 @@ public class MainTeleOpJava extends OpMode {
 
     @Override
     public void loop() {
-        // ARM ROTATION
-        if (gamepad2.dpad_down) {
-            armRotationMotor.setTargetPosition(1100);
+        //ARM ROTATION
+        if (gamepad2.dpad_down)
+        {
+                armRotationMotor.setTargetPosition(1100);
+                armRotationMotor.setPower(0.5);
+                armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+        //arm goes up
+        else if (gamepad2.dpad_up) {
+                armRotationMotor.setTargetPosition(20);
+                armRotationMotor.setPower(-0.6);
+                armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+        if (gamepad2.left_stick_y != 0){
             armRotationMotor.setPower(0.5);
-            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
-        if (gamepad2.dpad_up) {
-            armRotationMotor.setTargetPosition(20);
-            armRotationMotor.setPower(0.5);
-            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        else armRotationMotor.setPower(0.0);
+        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int)(gamepad2.left_stick_y * 70)), 1300),20));
+
+        //ARM EXTENSION
+        if (gamepad2.right_stick_y != 0){
+            armExtensionMotor.setPower(0.5);
         }
-        // Arm rotation joystick
-        if (gamepad2.left_stick_y != 0f && !armRotationMotor.isBusy()) {
-            int currentArmRotation = armRotationMotor.getCurrentPosition() + (int) (gamepad2.left_stick_y * 50);
-            currentArmRotation = Math.max(0, Math.min(currentArmRotation, 1050));
-            armRotationMotor.setTargetPosition(currentArmRotation);
-            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            armRotationMotor.setPower(0.8);
-        }
-        // ARM EXTENSION
-        if (gamepad2.right_stick_y != 0f) {
-            int currentArmExtension = armExtensionMotor.getCurrentPosition() + (int) (gamepad2.right_stick_y * -80);
-            currentArmExtension = Math.max(0, Math.min(currentArmExtension, 1100));
-            armExtensionMotor.setTargetPosition(currentArmExtension);
-            armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            armExtensionMotor.setPower(1.0);
-        }
+        else armExtensionMotor.setPower(0.0);
+
+        // new slides got added so we need to measure what's the max it can go and change this number
+        if (armRotationMotor.getCurrentPosition() > 300) maxExtension = 1100;
+        else maxExtension = 1100;
+
+        armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int)(gamepad2.right_stick_y * 70)), maxExtension),0));
 
         // CLAW
         if (gamepad2.x) {
@@ -105,6 +103,7 @@ public class MainTeleOpJava extends OpMode {
         }
 
         // HANGING
+        // switch hanging to gamepad1
         if (gamepad2.right_bumper) {
             int newPos = hangingArm.getCurrentPosition() + 700;
             newPos = Math.max(-20500, Math.min(newPos, 0));
