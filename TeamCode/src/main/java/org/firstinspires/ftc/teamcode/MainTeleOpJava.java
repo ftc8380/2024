@@ -41,13 +41,20 @@ public class MainTeleOpJava extends OpMode {
 
         // Set all motors to run using encoders
         List<DcMotor> motors = Arrays.asList(
-                motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight,
-                armRotationMotor, armExtensionMotor, hangingArm
+                motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, hangingArm
         );
         for (DcMotor motor : motors) {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
+        armExtensionMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armRotationMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armExtensionMotor.setTargetPosition(0);
+        armExtensionMotor.setPower(1);
+        armRotationMotor.setTargetPosition(0);
+        armRotationMotor.setPower(1);
+        armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Reverse direction of left-side motors
         motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -64,44 +71,34 @@ public class MainTeleOpJava extends OpMode {
     @Override
     public void loop() {
         //ARM ROTATION
-        if (gamepad2.dpad_down)
-        {
+        if (gamepad2.dpad_down) {
             armRotationMotor.setTargetPosition(1100);
-            armRotationMotor.setPower(0.5);
-            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            armRotationMotor.setPower(0.5);
         }
         //arm goes up
         else if (gamepad2.dpad_up) {
             armRotationMotor.setTargetPosition(20);
-            armRotationMotor.setPower(-0.6);
-            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            armRotationMotor.setPower(-0.6);
         }
-        if (gamepad2.left_stick_y != 0){
-            armRotationMotor.setPower(gamepad2.left_stick_y/2);
-        }
-        else armRotationMotor.setPower(0.0);
-        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() + (int)(-gamepad2.left_stick_y * 70)), 1300),20));
+//        if (gamepad2.left_stick_y != 0) {
+//            armRotationMotor.setPower(gamepad2.left_stick_y / 2);
+//        } else armRotationMotor.setPower(0.0);
+        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int) (gamepad2.left_stick_y * 70)), 1300), 0));
 
         //ARM EXTENSION
-        if (gamepad2.right_stick_y > 0){
-            armExtensionMotor.setPower(-0.5);
-        } else if (gamepad1.right_stick_y < 0) {
-            armExtensionMotor.setPower(0.5);
-        }
-        else armExtensionMotor.setPower(0.0);
-
-
-        if (armExtensionMotor.getCurrentPosition() >= 1100){
-            armExtensionMotor.setTargetPosition(1100 );
-        }
-        else armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int)(gamepad2.right_stick_y * 70)), maxExtension),0));
+//        if (gamepad2.right_stick_y > 0) {
+//            armExtensionMotor.setPower(-0.5);
+//        } else if (gamepad2.right_stick_y < 0) {
+//            armExtensionMotor.setPower(0.5);
+//        } else armExtensionMotor.setPower(0.0);
+        armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int) (gamepad2.right_stick_y * 70)), 1100), 0));
 
         // CLAW
         if (gamepad2.x) {
             armClaw.setPosition(0.0);
         }
         if (gamepad2.b) {
-            armClaw.setPosition(0.3);
+            armClaw.setPosition(1);
         }
 
         // HANGING
