@@ -2,12 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -15,7 +13,7 @@ import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
 
 @Config
 @Autonomous(group = "drive")
-public class AutoTest extends OpMode {
+public class LeftBasketAuto extends OpMode {
 
     private MecanumDrive drive;
 
@@ -23,9 +21,11 @@ public class AutoTest extends OpMode {
     private DcMotor armExtensionMotor;
     private Servo armClaw;
 
-    private Trajectory trajectoryForward;
+    private Trajectory trajectoryOne;
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
+
+    private Trajectory trajectoryFour;
 
     // For timing tiny waits instead of Thread.sleep()
     private double stepStartTime;
@@ -47,16 +47,19 @@ public class AutoTest extends OpMode {
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Build trajectories
-        trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(18, 50), Math.toRadians(0))
+        trajectoryOne = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(9, 30), Math.toRadians(135))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(9)
+                .forward(5)
+                .build();
+        trajectoryThree = drive.trajectoryBuilder(new Pose2d())
+                .back(5)
                 .build();
 
-        trajectoryThree = drive.trajectoryBuilder(new Pose2d())
-                .back(12)
+        trajectoryFour = drive.trajectoryBuilder(new Pose2d())
+                .splineTo(new Vector2d(-6,10), Math.toRadians(-135))
                 .build();
 
         telemetry.addData("Status", "Initialized");
@@ -70,7 +73,7 @@ public class AutoTest extends OpMode {
     @Override
     public void start() {
         // Start the first trajectory
-        drive.followTrajectoryAsync(trajectoryForward);
+        drive.followTrajectoryAsync(trajectoryOne);
         step = 1; // Move to next step
         stepStartTime = getRuntime();
     }
@@ -80,11 +83,11 @@ public class AutoTest extends OpMode {
         // Update Road Runner
         drive.update();
 
-        // Step 1: Wait for trajectoryForward to finish
+        // Step 1: Wait for trajectoryOne to finish
         if (step == 1 && !drive.isBusy()) {
             // Move arm slightly up and out
             setArmAngle(0.05);
-            setArmLength(3.5);
+            setArmLength(5);
             stepStartTime = getRuntime();
             step = 2;
         }
@@ -95,44 +98,42 @@ public class AutoTest extends OpMode {
             step = 3;
         }
 
-        // Step 3: Wait for trajectoryTwo to finish
-        if (step == 3 && !drive.isBusy()) {
-            // Adjust arm length for drop
-            setArmLength(0.6);
+
+        // Step 3: Wait ~0.2 seconds
+        if (step == 3 && getRuntime() - stepStartTime > WAIT_TIME) {
+            // Close the claw
+            armClaw.setPosition(0.2);
             stepStartTime = getRuntime();
             step = 4;
         }
 
-        // Step 4: Wait ~0.2 seconds
+        // Step 4: Wait ~0.2 seconds, then pull arm down before trajectory 3
         if (step == 4 && getRuntime() - stepStartTime > WAIT_TIME) {
-            // Close the claw
-            armClaw.setPosition(0.2);
+            setArmAngle(0);
             stepStartTime = getRuntime();
             step = 5;
         }
 
-        // Step 5: Wait ~0.2 seconds, then pull arm down before trajectory 3
+        // Step 5: Wait ~0.2 seconds for arm to move down
         if (step == 5 && getRuntime() - stepStartTime > WAIT_TIME) {
-            setArmAngle(0);
-            stepStartTime = getRuntime();
+            // Start trajectoryThree
+            drive.followTrajectoryAsync(trajectoryThree);
             step = 6;
         }
 
-        // Step 6: Wait ~0.2 seconds for arm to move down
-        if (step == 6 && getRuntime() - stepStartTime > WAIT_TIME) {
-            // Start trajectoryThree
-            drive.followTrajectoryAsync(trajectoryThree);
-            step = 7;
-        }
-
-        // Step 7: Wait for trajectoryThree to finish
-        if (step == 7 && !drive.isBusy()) {
+        // Step 6: Wait for trajectoryThree to finish
+        if (step == 6 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmLength(-100); // will clamp to 0
             setArmAngle(0);
             armClaw.setPosition(0);
-            step = 8;
+            step = 7;
         }
+        if (step == 7 && getRuntime() - stepStartTime > WAIT_TIME) {
+        // Retract arm and open claw
+        drive.followTrajectoryAsync(trajectoryFour);
+        step = 8;
+    }
 
         // Step 8: Done
         // No further actions needed.
