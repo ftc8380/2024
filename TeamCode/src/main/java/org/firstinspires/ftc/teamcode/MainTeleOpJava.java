@@ -66,30 +66,30 @@ public class MainTeleOpJava extends OpMode {
         //ARM ROTATION
         if (gamepad2.dpad_down)
         {
-                armRotationMotor.setTargetPosition(1100);
-                armRotationMotor.setPower(0.5);
-                armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armRotationMotor.setTargetPosition(1100);
+            armRotationMotor.setPower(0.5);
+            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
         //arm goes up
         else if (gamepad2.dpad_up) {
-                armRotationMotor.setTargetPosition(20);
-                armRotationMotor.setPower(-0.6);
-                armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armRotationMotor.setTargetPosition(20);
+            armRotationMotor.setPower(-0.6);
+            armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
         if (gamepad2.left_stick_y != 0){
-            armRotationMotor.setPower(0.5);
+            armRotationMotor.setPower(gamepad2.left_stick_y/2);
         }
         else armRotationMotor.setPower(0.0);
         armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int)(gamepad2.left_stick_y * 70)), 1300),20));
 
         //ARM EXTENSION
         if (gamepad2.right_stick_y != 0){
-            armExtensionMotor.setPower(0.5);
+            armExtensionMotor.setPower(-gamepad2.right_stick_y/2);
         }
         else armExtensionMotor.setPower(0.0);
 
         // new slides got added so we need to measure what's the max it can go and change this number
-        if (armRotationMotor.getCurrentPosition() > 300) maxExtension = 1100;
+        if (armRotationMotor.getCurrentPosition() > 300) maxExtension = 2600;
         else maxExtension = 1100;
 
         armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int)(gamepad2.right_stick_y * 70)), maxExtension),0));
