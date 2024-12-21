@@ -80,19 +80,21 @@ public class MainTeleOpJava extends OpMode {
             armRotationMotor.setPower(gamepad2.left_stick_y/2);
         }
         else armRotationMotor.setPower(0.0);
-        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int)(gamepad2.left_stick_y * 70)), 1300),20));
+        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() + (int)(-gamepad2.left_stick_y * 70)), 1300),20));
 
         //ARM EXTENSION
-        if (gamepad2.right_stick_y != 0){
-            armExtensionMotor.setPower(-gamepad2.right_stick_y/2);
+        if (gamepad2.right_stick_y > 0){
+            armExtensionMotor.setPower(-0.5);
+        } else if (gamepad1.right_stick_y < 0) {
+            armExtensionMotor.setPower(0.5);
         }
         else armExtensionMotor.setPower(0.0);
 
-        // new slides got added so we need to measure what's the max it can go and change this number
-        if (armRotationMotor.getCurrentPosition() > 300) maxExtension = 2600;
-        else maxExtension = 1100;
 
-        armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int)(gamepad2.right_stick_y * 70)), maxExtension),0));
+        if (armExtensionMotor.getCurrentPosition() >= 1100){
+            armExtensionMotor.setTargetPosition(1100 );
+        }
+        else armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int)(gamepad2.right_stick_y * 70)), maxExtension),0));
 
         // CLAW
         if (gamepad2.x) {

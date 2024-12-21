@@ -46,11 +46,11 @@ public class LeftSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(-18, 50), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(18, -50), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(9)
+                .forward(10)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
