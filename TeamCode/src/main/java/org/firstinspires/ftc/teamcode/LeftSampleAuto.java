@@ -50,7 +50,7 @@ public class LeftSampleAuto extends OpMode {
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(10)
+                .forward(7)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())

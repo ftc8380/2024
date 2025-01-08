@@ -47,11 +47,11 @@ public class RightSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(18, 50), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(27, 50), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(9)
+                .forward(4)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
@@ -68,10 +68,11 @@ public class RightSampleAuto extends OpMode {
 
     @Override
     public void start() {
-        // Start the first trajectory
-        drive.followTrajectoryAsync(trajectoryForward);
-        step = 1; // Move to next step
+        // Move arm slightly up and out
+        setArmAngle(0);
+        setArmLength(2.46);
         stepStartTime = getRuntime();
+        step = 1;
     }
 
     @Override
@@ -79,59 +80,34 @@ public class RightSampleAuto extends OpMode {
         // Update Road Runner
         drive.update();
 
-        // Step 1: Wait for trajectoryForward to finish
-        if (step == 1 && !drive.isBusy()) {
-            // Move arm slightly up and out
-            setArmAngle(0.05);
-            setArmLength(3.5);
+        // Step 1: Wait for mechanism to go up
+        if (step == 1 && getRuntime() - stepStartTime > WAIT_TIME && armExtensionMotor.getCurrentPosition() > 925) {
+            // Start the first trajectory
+            drive.followTrajectoryAsync(trajectoryForward);
+            step = 2; // Move to next step
             stepStartTime = getRuntime();
-            step = 2;
         }
 
-        // Step 2: Wait ~0.2 seconds, then start trajectoryTwo
-        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME) {
-            drive.followTrajectoryAsync(trajectoryTwo);
+        //start trajectory 1
+        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME && !drive.isBusy()) {
+            drive.followTrajectory(trajectoryTwo);
+            stepStartTime = getRuntime();
             step = 3;
         }
 
-        // Step 3: Wait for trajectoryTwo to finish
+        // Step 2: Wait for trajectory to finish
         if (step == 3 && !drive.isBusy()) {
-            // Adjust arm length for drop
-            setArmLength(0.6);
+            armExtensionMotor.setTargetPosition(580);
             stepStartTime = getRuntime();
             step = 4;
         }
 
-        // Step 4: Wait ~0.2 seconds
-        if (step == 4 && getRuntime() - stepStartTime > WAIT_TIME) {
-            // Close the claw
-            armClaw.setPosition(0.2);
+        if (step == 4 && getRuntime() - stepStartTime > WAIT_TIME && armExtensionMotor.getCurrentPosition() >= 585 ) {
+            armClaw.setPosition(0.3);
             stepStartTime = getRuntime();
             step = 5;
         }
 
-        // Step 5: Wait ~0.2 seconds, then pull arm down before trajectory 3
-        if (step == 5 && getRuntime() - stepStartTime > WAIT_TIME) {
-            setArmAngle(0);
-            stepStartTime = getRuntime();
-            step = 6;
-        }
-
-        // Step 6: Wait ~0.2 seconds for arm to move down
-        if (step == 6 && getRuntime() - stepStartTime > WAIT_TIME) {
-            // Start trajectoryThree
-            drive.followTrajectoryAsync(trajectoryThree);
-            step = 7;
-        }
-
-        // Step 7: Wait for trajectoryThree to finish
-        if (step == 7 && !drive.isBusy()) {
-            // Retract arm and open claw
-            setArmLength(-100); // will clamp to 0
-            setArmAngle(0);
-            armClaw.setPosition(0);
-            step = 8;
-        }
 
         // Step 8: Done
         // No further actions needed.

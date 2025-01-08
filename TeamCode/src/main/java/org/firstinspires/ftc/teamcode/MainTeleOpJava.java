@@ -71,19 +71,36 @@ public class MainTeleOpJava extends OpMode {
     @Override
     public void loop() {
         //ARM ROTATION
-        if (gamepad2.dpad_down) {
+        if (gamepad2.back) {
+            armClaw.setPosition(0.3);
             armRotationMotor.setTargetPosition(1100);
 //            armRotationMotor.setPower(0.5);
         }
         //arm goes up
-        else if (gamepad2.dpad_up) {
+        else if (gamepad2.start) {
             armRotationMotor.setTargetPosition(20);
 //            armRotationMotor.setPower(-0.6);
         }
+        else if (gamepad2.right_bumper) {
+            armExtensionMotor.setTargetPosition(945);
+            armRotationMotor.setTargetPosition(0);
+        }
+        else if (gamepad2.left_bumper) {
+            while(armExtensionMotor.getCurrentPosition() >= 590) {
+                armExtensionMotor.setTargetPosition(580);
+            }
+            while(armClaw.getPosition() <= 0.28) {
+                armClaw.setPosition(0.3);
+            }
+
+        }
+
 //        if (gamepad2.left_stick_y != 0) {
 //            armRotationMotor.setPower(gamepad2.left_stick_y / 2);
 //        } else armRotationMotor.setPower(0.0);
-        armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int) (gamepad2.left_stick_y * 70)), 1300), 0));
+        if(gamepad2.left_stick_y != 0) {
+            armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int) (gamepad2.left_stick_y * 70)), 1300), 0));
+        }
 
         //ARM EXTENSION
 //        if (gamepad2.right_stick_y > 0) {
@@ -91,16 +108,23 @@ public class MainTeleOpJava extends OpMode {
 //        } else if (gamepad2.right_stick_y < 0) {
 //            armExtensionMotor.setPower(0.5);
 //        } else armExtensionMotor.setPower(0.0);
-        armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int) (gamepad2.right_stick_y * 70)), 1100), 0));
+        if (armRotationMotor.getCurrentPosition() < 250){
+            maxExtension = 2400;
+        }
+        else maxExtension = 1100;
+        if (gamepad2.right_stick_y != 0) {
+            armExtensionMotor.setTargetPosition(Math.max(Math.min((armExtensionMotor.getCurrentPosition() - (int) (gamepad2.right_stick_y * 70)), maxExtension), 0));
+        }
 
         // CLAW
         if (gamepad2.x) {
-            armClaw.setPosition(0.0);
+            armClaw.setPosition(0);
         }
         if (gamepad2.b) {
-            armClaw.setPosition(1);
+            armClaw.setPosition(0.3);
         }
 
+        /*
         // HANGING
         // switch hanging to gamepad1
         if (gamepad2.right_bumper) {
@@ -114,11 +138,14 @@ public class MainTeleOpJava extends OpMode {
             hangingArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             hangingArm.setPower(1.0);
         }
+        */
 
         // Overly complicated speed mode adjustment logic
         boolean currentDpadUp = gamepad1.dpad_up;
         boolean currentDpadDown = gamepad1.dpad_down;
 
+
+        //change this this is wack
         int adjustment = (currentDpadUp ? 1 : 0) - (currentDpadDown ? 1 : 0);
         boolean stateChanged = currentDpadUp != prevDpadUp || currentDpadDown != prevDpadDown;
 
@@ -184,13 +211,14 @@ public class MainTeleOpJava extends OpMode {
         motorBackRight.setPower(backRightPower);
 
         // Log motor positions to telemetry
-        telemetry.addData("Front Left Position", motorFrontLeft.getCurrentPosition());
+    /*    telemetry.addData("Front Left Position", motorFrontLeft.getCurrentPosition());
         telemetry.addData("Back Left Position", motorBackLeft.getCurrentPosition());
         telemetry.addData("Front Right Position", motorFrontRight.getCurrentPosition());
-        telemetry.addData("Back Right Position", motorBackRight.getCurrentPosition());
+        telemetry.addData("Back Right Position", motorBackRight.getCurrentPosition()); */
         telemetry.addData("Arm Rotation Position", armRotationMotor.getCurrentPosition());
         telemetry.addData("Arm Extension Position", armExtensionMotor.getCurrentPosition());
-        telemetry.addData("Hanging Arm Position", hangingArm.getCurrentPosition());
+      //  telemetry.addData("Hanging Arm Position", hangingArm.getCurrentPosition());
+        telemetry.addData("Max extension", maxExtension);
 
         // Send telemetry data to driver station
         telemetry.addData("Front Left Power", frontLeftPower);
