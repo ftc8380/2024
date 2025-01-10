@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -27,7 +28,7 @@ public class LeftSampleAuto extends OpMode {
 
     // For timing tiny waits instead of Thread.sleep()
     private double stepStartTime;
-    private final double WAIT_TIME = 0.2; // 200 ms pause
+    private final double WAIT_TIME = 0.2; //300 ms pause
 
     // Step counter to track progress without switch or enums
     private int step = 0;
@@ -46,11 +47,11 @@ public class LeftSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(18, -50), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(20, -55 ), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(7)
+                .forward(11)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
@@ -81,8 +82,8 @@ public class LeftSampleAuto extends OpMode {
         // Step 1: Wait for trajectoryForward to finish
         if (step == 1 && !drive.isBusy()) {
             // Move arm slightly up and out
-            setArmAngle(0.05);
-            setArmLength(3.5);
+
+            setArmLength(4);
             stepStartTime = getRuntime();
             step = 2;
         }
@@ -96,13 +97,13 @@ public class LeftSampleAuto extends OpMode {
         // Step 3: Wait for trajectoryTwo to finish
         if (step == 3 && !drive.isBusy()) {
             // Adjust arm length for drop
-            setArmLength(0.6);
+            setArmLength(1.5);
             stepStartTime = getRuntime();
             step = 4;
         }
 
         // Step 4: Wait ~0.2 seconds
-        if (step == 4 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 4 && getRuntime() - stepStartTime > 2) {
             // Close the claw
             armClaw.setPosition(0.2);
             stepStartTime = getRuntime();

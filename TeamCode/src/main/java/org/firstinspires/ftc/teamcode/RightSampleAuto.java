@@ -28,7 +28,7 @@ public class RightSampleAuto extends OpMode {
 
     // For timing tiny waits instead of Thread.sleep()
     private double stepStartTime;
-    private final double WAIT_TIME = 0.2; // 200 ms pause
+    private final double WAIT_TIME = 0.2; //300 ms pause
 
     // Step counter to track progress without switch or enums
     private int step = 0;
@@ -47,11 +47,11 @@ public class RightSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(27, 50), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(18, 55 ), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(4)
+                .forward(11)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
@@ -68,11 +68,10 @@ public class RightSampleAuto extends OpMode {
 
     @Override
     public void start() {
-        // Move arm slightly up and out
-        setArmAngle(0);
-        setArmLength(2.46);
+        // Start the first trajectory
+        drive.followTrajectoryAsync(trajectoryForward);
+        step = 1; // Move to next step
         stepStartTime = getRuntime();
-        step = 1;
     }
 
     @Override
@@ -80,34 +79,59 @@ public class RightSampleAuto extends OpMode {
         // Update Road Runner
         drive.update();
 
-        // Step 1: Wait for mechanism to go up
-        if (step == 1 && getRuntime() - stepStartTime > WAIT_TIME && armExtensionMotor.getCurrentPosition() > 925) {
-            // Start the first trajectory
-            drive.followTrajectoryAsync(trajectoryForward);
-            step = 2; // Move to next step
+        // Step 1: Wait for trajectoryForward to finish
+        if (step == 1 && !drive.isBusy()) {
+            // Move arm slightly up and out
+
+            setArmLength(4);
             stepStartTime = getRuntime();
+            step = 2;
         }
 
-        //start trajectory 1
-        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME && !drive.isBusy()) {
-            drive.followTrajectory(trajectoryTwo);
-            stepStartTime = getRuntime();
+        // Step 2: Wait ~0.2 seconds, then start trajectoryTwo
+        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME) {
+            drive.followTrajectoryAsync(trajectoryTwo);
             step = 3;
         }
 
-        // Step 2: Wait for trajectory to finish
+        // Step 3: Wait for trajectoryTwo to finish
         if (step == 3 && !drive.isBusy()) {
-            armExtensionMotor.setTargetPosition(580);
+            // Adjust arm length for drop
+            setArmLength(1.5);
             stepStartTime = getRuntime();
             step = 4;
         }
 
-        if (step == 4 && getRuntime() - stepStartTime > WAIT_TIME && armExtensionMotor.getCurrentPosition() >= 585 ) {
-            armClaw.setPosition(0.3);
+        // Step 4: Wait ~0.2 seconds
+        if (step == 4 && getRuntime() - stepStartTime > 2) {
+            // Close the claw
+            armClaw.setPosition(0.2);
             stepStartTime = getRuntime();
             step = 5;
         }
 
+        // Step 5: Wait ~0.2 seconds, then pull arm down before trajectory 3
+        if (step == 5 && getRuntime() - stepStartTime > WAIT_TIME) {
+            setArmAngle(0);
+            stepStartTime = getRuntime();
+            step = 6;
+        }
+
+        // Step 6: Wait ~0.2 seconds for arm to move down
+        if (step == 6 && getRuntime() - stepStartTime > WAIT_TIME) {
+            // Start trajectoryThree
+            drive.followTrajectoryAsync(trajectoryThree);
+            step = 7;
+        }
+
+        // Step 7: Wait for trajectoryThree to finish
+        if (step == 7 && !drive.isBusy()) {
+            // Retract arm and open claw
+            setArmLength(-100); // will clamp to 0
+            setArmAngle(0);
+            armClaw.setPosition(0);
+            step = 8;
+        }
 
         // Step 8: Done
         // No further actions needed.
