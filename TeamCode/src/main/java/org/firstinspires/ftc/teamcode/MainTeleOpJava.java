@@ -13,7 +13,8 @@ import java.util.List;
 @TeleOp
 public class MainTeleOpJava extends OpMode {
     // Declare hardware variables
-    private DcMotor motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor, hangingArm;
+    private DcMotor motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor;
+    private DcMotorSimple hangingArm;
     private BNO055IMU imu;
     private Servo armClaw;
 
@@ -22,6 +23,7 @@ public class MainTeleOpJava extends OpMode {
     private int currentSpeedModeIndex = 1; // default to 0.55
     private boolean prevDpadUp = false;
     private boolean prevDpadDown = false;
+    private double dpadY, dpadX;
 
     int maxExtension = 1100;
 
@@ -41,7 +43,7 @@ public class MainTeleOpJava extends OpMode {
 
         // Set all motors to run using encoders
         List<DcMotor> motors = Arrays.asList(
-                motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, hangingArm
+                motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight
         );
         for (DcMotor motor : motors) {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -86,8 +88,8 @@ public class MainTeleOpJava extends OpMode {
             armRotationMotor.setTargetPosition(0);
         }
         else if (gamepad2.left_bumper) {
-            while(armExtensionMotor.getCurrentPosition() >= 590) {
-                armExtensionMotor.setTargetPosition(580);
+            while(armExtensionMotor.getCurrentPosition() >= 450) {
+                armExtensionMotor.setTargetPosition(440);
             }
             while(armClaw.getPosition() <= 0.28) {
                 armClaw.setPosition(0.3);
@@ -103,11 +105,6 @@ public class MainTeleOpJava extends OpMode {
         }
 
         //ARM EXTENSION
-//        if (gamepad2.right_stick_y > 0) {
-//            armExtensionMotor.setPower(-0.5);
-//        } else if (gamepad2.right_stick_y < 0) {
-//            armExtensionMotor.setPower(0.5);
-//        } else armExtensionMotor.setPower(0.0);
         if (armRotationMotor.getCurrentPosition() < 250){
             maxExtension = 2400;
         }
@@ -124,21 +121,10 @@ public class MainTeleOpJava extends OpMode {
             armClaw.setPosition(0.3);
         }
 
-        /*
+
         // HANGING
-        // switch hanging to gamepad1
-        if (gamepad2.right_bumper) {
-            int newPos = hangingArm.getCurrentPosition() + 700;
-            newPos = Math.max(-20500, Math.min(newPos, 0));
-            hangingArm.setTargetPosition(newPos);
-            hangingArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            hangingArm.setPower(1.0);
-        } else if (gamepad2.left_bumper) {
-            hangingArm.setTargetPosition(-20500);
-            hangingArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            hangingArm.setPower(1.0);
-        }
-        */
+        hangingArm.setPower(gamepad2.right_trigger - gamepad2.left_trigger);
+
 
         // Overly complicated speed mode adjustment logic
         boolean currentDpadUp = gamepad1.dpad_up;
@@ -177,9 +163,22 @@ public class MainTeleOpJava extends OpMode {
             botOrientedY = -backwardTrigger;
         }
 
+        if (gamepad2.dpad_up){
+            dpadY = -0.2;
+        } else if (gamepad2.dpad_down) {
+            dpadY = 0.2;
+        }
+        else dpadY = 0;
+        if (gamepad2.dpad_right){
+            dpadX = 0.2;
+        } else if (gamepad2.dpad_left) {
+            dpadX = -0.2;
+        }
+        else dpadX = 0;
+
         // NORMAL FIELD-ORIENTED JOYSTICK MOVEMENT
-        double y = -gamepad1.left_stick_y;
-        double x = gamepad1.left_stick_x * 1.1;
+        double y = -(gamepad1.left_stick_y + dpadY);
+        double x = (gamepad1.left_stick_x + dpadX) * 1.1;
         double rx = gamepad1.right_stick_x;
 
         double botHeadingRadians = -imu.getAngularOrientation().firstAngle;
