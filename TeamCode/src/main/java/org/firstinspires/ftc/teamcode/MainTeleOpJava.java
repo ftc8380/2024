@@ -86,8 +86,8 @@ public class MainTeleOpJava extends OpMode {
             armRotationMotor.setTargetPosition(0);
         }
         else if (gamepad2.left_bumper) {
-            while(armExtensionMotor.getCurrentPosition() >= 590) {
-                armExtensionMotor.setTargetPosition(580);
+            while(armExtensionMotor.getCurrentPosition() >= 450) {
+                armExtensionMotor.setTargetPosition(450);
             }
             while(armClaw.getPosition() <= 0.28) {
                 armClaw.setPosition(0.3);
