@@ -144,23 +144,18 @@ public class MainTeleOpJava extends OpMode {
         boolean currentDpadUp = gamepad1.dpad_up;
         boolean currentDpadDown = gamepad1.dpad_down;
 
-
-        //change this this is wack
-        int adjustment = (currentDpadUp ? 1 : 0) - (currentDpadDown ? 1 : 0);
-        boolean stateChanged = currentDpadUp != prevDpadUp || currentDpadDown != prevDpadDown;
+        boolean stateChanged = (currentDpadUp != prevDpadUp) || (currentDpadDown != prevDpadDown);
 
         if (stateChanged) {
-            int tentativeIndex = currentSpeedModeIndex;
-            for (int i = 0; i < Math.abs(adjustment); i++) {
-                if (adjustment > 0 && tentativeIndex < speedModes.length - 1) {
-                    tentativeIndex++;
-                } else if (adjustment < 0 && tentativeIndex > 0) {
-                    tentativeIndex--;
-                }
+            // if dpad up is pressed and we're not at the maximum index increment the index
+            if (currentDpadUp && currentSpeedModeIndex < speedModes.length - 1) {
+                currentSpeedModeIndex++;
             }
-            currentSpeedModeIndex = tentativeIndex;
+            // if dpad down is pressed and we're not at the minimum index decrement the index
+            else if (currentDpadDown && currentSpeedModeIndex > 0) {
+                currentSpeedModeIndex--;
+            }
         }
-
         // Update previous button states
         prevDpadUp = currentDpadUp;
         prevDpadDown = currentDpadDown;
