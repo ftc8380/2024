@@ -94,9 +94,10 @@ public class LeftBasketAuto extends OpMode {
     @Override
     public void start() {
         // Start the first trajectory
-        drive.followTrajectoryAsync(startToBasket);
+          drive.followTrajectoryAsync(startToBasket);
         step = 1; // Move to next step
         stepStartTime = getRuntime();
+
     }
 
     @Override
@@ -114,14 +115,15 @@ public class LeftBasketAuto extends OpMode {
         }
 
         // Step 2: Wait ~0.2 seconds, then start trajectoryTwo
-        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 2 && armExtensionMotor.getCurrentPosition() >= 1900) {
             drive.followTrajectoryAsync(forward);
+            stepStartTime = getRuntime();
             step = 3;
         }
 
 
         // Step 3: Wait ~0.2 seconds
-        if (step == 3 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 3 && !drive.isBusy()) {
             // Close the claw
             armClaw.setPosition(0.2);
             stepStartTime = getRuntime();
@@ -136,7 +138,7 @@ public class LeftBasketAuto extends OpMode {
         }
 
         // Step 5: Wait ~0.2 seconds for arm to move down
-        if (step == 5 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 5 && !drive.isBusy() && getRuntime() - stepStartTime > WAIT_TIME ) {
             // Pull arm down
             setArmLength(0);
             stepStartTime = getRuntime();
@@ -144,18 +146,18 @@ public class LeftBasketAuto extends OpMode {
         }
 
         // Step 6: Wait for trajectoryThree to finish
-        if (step == 6 && !drive.isBusy()) {
+        if (step == 6 && armExtensionMotor.getCurrentPosition() <= 100) {
 
             drive.followTrajectoryAsync(grabOne);
 
-            armClaw.setPosition(0);
+
             stepStartTime = getRuntime();
             step = 7;
         }
-        if (step == 7 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 7 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmAngle(0.2);
-            armClaw.setPosition(0.2);
+
             stepStartTime = getRuntime();
             step = 8;
         }
@@ -177,7 +179,7 @@ public class LeftBasketAuto extends OpMode {
             stepStartTime = getRuntime();
             step = 11;
         }
-        if (step == 11 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 11 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmLength(5);
             stepStartTime = getRuntime();
@@ -189,14 +191,14 @@ public class LeftBasketAuto extends OpMode {
             stepStartTime = getRuntime();
             step = 13;
         }
-        if (step == 13 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 13 && !drive.isBusy()) {
             // Retract arm and open claw
             armClaw.setPosition(0.2);
             drive.followTrajectoryAsync(backward);
             stepStartTime = getRuntime();
             step = 14;
         }
-        if (step == 14 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 14 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmLength(0);
             stepStartTime = getRuntime();
@@ -208,14 +210,14 @@ public class LeftBasketAuto extends OpMode {
             stepStartTime = getRuntime();
             step = 16;
         }
-        if (step == 16 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 16 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmAngle(0.2);
             armClaw.setPosition(0.2);
             stepStartTime = getRuntime();
             step = 17;
         }
-        if (step == 17 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 17 && armRotationMotor.getCurrentPosition() >= 0.19*5281.1) {
             // grab
             armClaw.setPosition(0);
             stepStartTime = getRuntime();
@@ -227,13 +229,13 @@ public class LeftBasketAuto extends OpMode {
             stepStartTime = getRuntime();
             step = 19;
         }
-        if (step == 19 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 19 && armRotationMotor.getCurrentPosition() >= 0.01*5281.1) {
             // Retract arm and open claw
             drive.followTrajectoryAsync(thirdBasket);
             stepStartTime = getRuntime();
             step = 20;
         }
-        if (step == 20 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 20 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmLength(5);
             stepStartTime = getRuntime();
@@ -245,14 +247,14 @@ public class LeftBasketAuto extends OpMode {
             stepStartTime = getRuntime();
             step = 22;
         }
-        if (step == 22 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 22 && !drive.isBusy()) {
             // Retract arm and open claw
             armClaw.setPosition(0.2);
             drive.followTrajectoryAsync(backward);
             stepStartTime = getRuntime();
             step = 23;
         }
-        if (step == 23 && getRuntime() - stepStartTime > WAIT_TIME) {
+        if (step == 23 && !drive.isBusy()) {
             // Retract arm and open claw
             setArmLength(0);
             stepStartTime = getRuntime();
@@ -275,7 +277,7 @@ public class LeftBasketAuto extends OpMode {
     private void setArmLength(double rotations) {
         int ticks = (int)(384.5 * rotations);
         // clamp ticks between 0 and 1100
-        ticks = Math.max(0, Math.min(ticks, 1100));
+        ticks = Math.max(0, Math.min(ticks, 2400));
         armExtensionMotor.setTargetPosition(ticks);
         armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armExtensionMotor.setPower(1.0);
