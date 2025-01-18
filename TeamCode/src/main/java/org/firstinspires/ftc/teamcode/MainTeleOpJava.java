@@ -73,21 +73,21 @@ public class MainTeleOpJava extends OpMode {
     @Override
     public void loop() {
         //ARM ROTATION
-        if (gamepad2.back) {
+        if (gamepad2.left_bumper) {
             //rotates arm down
             armClaw.setPosition(0.3);
             armRotationMotor.setTargetPosition(1100);
         }
-        else if (gamepad2.start) {
+        else if (gamepad2.left_trigger > 0.5) {
             //rotates arm up
             armRotationMotor.setTargetPosition(20);
         }
-        else if (gamepad2.right_bumper) {
+        else if (gamepad2.right_trigger > 0.5) {
             //sample goes up
             armExtensionMotor.setTargetPosition(945);
             armRotationMotor.setTargetPosition(0);
         }
-        else if (gamepad2.left_bumper) {
+        else if (gamepad2.right_bumper) {
             //sample goes down
             while(armExtensionMotor.getCurrentPosition() >= 450) {
                 armExtensionMotor.setTargetPosition(440);
