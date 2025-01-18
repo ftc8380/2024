@@ -53,7 +53,7 @@ public class LeftBasketAuto extends OpMode {
                 .splineTo(new Vector2d(9, 20), Math.toRadians(135))
                 .build();
 
-        forward = drive.trajectoryBuilder(new Pose2d()).forward(5).build();
+        forward = drive.trajectoryBuilder(new Pose2d()).splineTo(new Vector2d(3,-3), Math.toRadians(-135)).build();
         backward = drive.trajectoryBuilder(new Pose2d()).back(5).build();
 
         grabOne = drive.trajectoryBuilder(new Pose2d())
@@ -330,7 +330,7 @@ public class LeftBasketAuto extends OpMode {
     @Override
     public void loop() {
         // Let the state machine handle everything
-        stateMachine.update();
+        stateMachine.update(this);
 
         // Telemetry
         telemetry.addData("Machine Done?", stateMachine.isFinished());
