@@ -74,20 +74,21 @@ public class MainTeleOpJava extends OpMode {
     public void loop() {
         //ARM ROTATION
         if (gamepad2.back) {
+            //rotates arm down
             armClaw.setPosition(0.3);
             armRotationMotor.setTargetPosition(1100);
-//            armRotationMotor.setPower(0.5);
         }
-        //arm goes up
         else if (gamepad2.start) {
+            //rotates arm up
             armRotationMotor.setTargetPosition(20);
-//            armRotationMotor.setPower(-0.6);
         }
         else if (gamepad2.right_bumper) {
+            //sample goes up
             armExtensionMotor.setTargetPosition(945);
             armRotationMotor.setTargetPosition(0);
         }
         else if (gamepad2.left_bumper) {
+            //sample goes down
             while(armExtensionMotor.getCurrentPosition() >= 450) {
                 armExtensionMotor.setTargetPosition(440);
             }
@@ -97,9 +98,6 @@ public class MainTeleOpJava extends OpMode {
 
         }
 
-//        if (gamepad2.left_stick_y != 0) {
-//            armRotationMotor.setPower(gamepad2.left_stick_y / 2);
-//        } else armRotationMotor.setPower(0.0);
         if(gamepad2.left_stick_y != 0) {
             armRotationMotor.setTargetPosition(Math.max(Math.min((armRotationMotor.getCurrentPosition() - (int) (gamepad2.left_stick_y * 70)), 1300), 0));
         }
@@ -123,7 +121,13 @@ public class MainTeleOpJava extends OpMode {
 
 
         // HANGING
-        hangingArm.setPower(gamepad2.right_trigger - gamepad2.left_trigger);
+        if (gamepad1.a){
+            hangingArm.setPower(1);
+        }
+        else if (gamepad1.b){
+            hangingArm.setPower(-1);
+        }
+        else hangingArm.setPower(0);
 
 
         // Overly complicated speed mode adjustment logic
@@ -131,7 +135,6 @@ public class MainTeleOpJava extends OpMode {
         boolean currentDpadDown = gamepad1.dpad_down;
 
 
-        //change this this is wack
         int adjustment = (currentDpadUp ? 1 : 0) - (currentDpadDown ? 1 : 0);
         boolean stateChanged = currentDpadUp != prevDpadUp || currentDpadDown != prevDpadDown;
 
