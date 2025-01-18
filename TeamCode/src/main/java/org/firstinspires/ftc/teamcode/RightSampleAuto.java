@@ -26,6 +26,7 @@ public class RightSampleAuto extends OpMode {
     private Trajectory trajectoryForward;
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
+    private Trajectory trajectoryFour;
 
     // Our minimal state machine
     private StateMachine stateMachine = new StateMachine();
@@ -51,9 +52,10 @@ public class RightSampleAuto extends OpMode {
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
-                .back(10)
-                .strafeRight(85)
-                .back(21)
+                .back(31)
+                .build();
+        trajectoryFour = drive.trajectoryBuilder(new Pose2d())
+                .strafeLeft(85)
                 .build();
 
         // --- Add states to the StateMachine ---
@@ -148,14 +150,15 @@ public class RightSampleAuto extends OpMode {
         stateMachine.addState(new State() {
             @Override
             public void init() {
+
                 setArmLength(-100);
                 setArmAngle(0);
                 armClaw.setPosition(0);
             }
             @Override
-            public void run() { /* do nothing */ }
+            public void run() { /* do nothing */ drive.followTrajectoryAsync(trajectoryFour); }
             @Override
-            public boolean isDone() { return true; }
+            public boolean isDone() { return !drive.isBusy(); }
         });
 
         telemetry.addData("Status", "Initialized");

@@ -25,6 +25,7 @@ public class LeftSampleAuto extends OpMode {
     private Trajectory trajectoryForward;
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
+    private Trajectory trajectoryFour;
 
     // For timing tiny waits instead of Thread.sleep()
     private double stepStartTime;
@@ -55,9 +56,10 @@ public class LeftSampleAuto extends OpMode {
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
-                .back(10)
+                .back(31)
+                .build();
+        trajectoryFour = drive.trajectoryBuilder(new Pose2d())
                 .strafeLeft(85)
-                .back(21)
                 .build();
 
         telemetry.addData("Status", "Initialized");
@@ -128,6 +130,8 @@ public class LeftSampleAuto extends OpMode {
 
         // Step 7: Wait for trajectoryThree to finish
         if (step == 7 && !drive.isBusy()) {
+
+            drive.followTrajectoryAsync(trajectoryFour);
             // Retract arm and open claw
             setArmLength(-100); // will clamp to 0
             setArmAngle(0);

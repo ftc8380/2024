@@ -41,6 +41,7 @@ public class LeftBasketAuto extends OpMode {
     public void init() {
         // Hardware
         drive = new MecanumDrive(hardwareMap);
+        drive.setPoseEstimate(new Pose2d(36, 64, -90));
         armRotationMotor = hardwareMap.get(DcMotor.class, "arm_rotation");
         armExtensionMotor = hardwareMap.get(DcMotor.class, "arm_extension");
         armClaw = hardwareMap.get(Servo.class, "claw_grab");
@@ -49,11 +50,13 @@ public class LeftBasketAuto extends OpMode {
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Build trajectories
-        startToBasket = drive.trajectoryBuilder(new Pose2d())
-                .splineTo(new Vector2d(9, 20), Math.toRadians(135))
+        startToBasket = drive.trajectoryBuilder(new Pose2d(36, 64, -90))
+                .splineTo(new Vector2d(9, 20), Math.toRadians(45))
                 .build();
 
-        forward = drive.trajectoryBuilder(new Pose2d()).splineTo(new Vector2d(3,-3), Math.toRadians(-135)).build();
+        forward = drive.trajectoryBuilder(startToBasket.end())
+                .strafeTo(new Vector2d(-3,-3))
+                .build();
         backward = drive.trajectoryBuilder(new Pose2d()).back(5).build();
 
         grabOne = drive.trajectoryBuilder(new Pose2d())
