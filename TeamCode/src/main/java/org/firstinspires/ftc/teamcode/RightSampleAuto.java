@@ -51,7 +51,9 @@ public class RightSampleAuto extends OpMode {
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
-                .back(12)
+                .back(10)
+                .strafeRight(85)
+                .back(21)
                 .build();
 
         // --- Add states to the StateMachine ---

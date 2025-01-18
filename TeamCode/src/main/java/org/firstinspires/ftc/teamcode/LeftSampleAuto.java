@@ -55,7 +55,9 @@ public class LeftSampleAuto extends OpMode {
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
-                .back(12)
+                .back(10)
+                .strafeLeft(85)
+                .back(21)
                 .build();
 
         telemetry.addData("Status", "Initialized");
