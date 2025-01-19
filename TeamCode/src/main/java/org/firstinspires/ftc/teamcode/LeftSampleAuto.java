@@ -6,18 +6,19 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
+import org.firstinspires.ftc.teamcode.util.State;
+import org.firstinspires.ftc.teamcode.util.StateMachine;
+import org.firstinspires.ftc.teamcode.util.TimedState;
 
 @Config
 @Autonomous(group = "drive")
 public class LeftSampleAuto extends OpMode {
 
     private MecanumDrive drive;
-
     private DcMotor armRotationMotor;
     private DcMotor armExtensionMotor;
     private Servo armClaw;
@@ -27,16 +28,11 @@ public class LeftSampleAuto extends OpMode {
     private Trajectory trajectoryThree;
     private Trajectory trajectoryFour;
 
-    // For timing tiny waits instead of Thread.sleep()
-    private double stepStartTime;
-    private final double WAIT_TIME = 0.2; //300 ms pause
-
-    // Step counter to track progress without switch or enums
-    private int step = 0;
+    // Our minimal state machine
+    private StateMachine stateMachine = new StateMachine();
 
     @Override
     public void init() {
-        // Initialize hardware
         drive = new MecanumDrive(hardwareMap);
 
         armRotationMotor = hardwareMap.get(DcMotor.class, "arm_rotation");
@@ -48,11 +44,11 @@ public class LeftSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(20, -55 ), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(18, -40 ), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(11)
+                .forward(16)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
@@ -61,6 +57,135 @@ public class LeftSampleAuto extends OpMode {
         trajectoryFour = drive.trajectoryBuilder(new Pose2d())
                 .strafeLeft(85)
                 .build();
+
+        // --- Add states to the StateMachine ---
+        stateMachine.addState(new TimedState(this, 13) {
+            @Override
+            public void init() {
+                super.init();
+            }
+        });
+
+        // 1) Drive forward
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryForward);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+        // 2) Raise arm a bit (and wait ~0.2s)
+        stateMachine.addState(new TimedState(this,0.2) {
+            @Override
+            public void onStart() {
+                setArmLength(3.6);
+                armClaw.setPosition(0);
+            }
+        });
+
+        // 3) Drive forward second trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryTwo);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+        // 4) Adjust arm length (and wait ~2s)
+        stateMachine.addState(new TimedState(this,3.0) {
+            @Override
+            public void onStart() {
+                setArmLength(1.5);
+            }
+        });
+
+        // 5) Close claw (and wait ~0.2s)
+        stateMachine.addState(new TimedState(this,0.2) {
+            @Override
+            public void onStart() {
+                armClaw.setPosition(0.2);
+            }
+        });
+
+        // 6) Move arm down (and wait ~0.2s)
+        stateMachine.addState(new TimedState(this,0.2) {
+            @Override
+            public void onStart() {
+                setArmAngle(0);
+            }
+        });
+
+        // 7) Drive backward third trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryThree);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+        // 8) Retract arm & open claw (done)
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+
+                setArmLength(-100);
+                setArmAngle(0);
+                armClaw.setPosition(0);
+            }
+            @Override
+            public void run() { /* do nothing */ }
+            @Override
+            public boolean isDone() { return !drive.isBusy(); }
+        });
+
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryFour);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+
 
         telemetry.addData("Status", "Initialized");
     }
@@ -72,77 +197,16 @@ public class LeftSampleAuto extends OpMode {
 
     @Override
     public void start() {
-        // Start the first trajectory
-        drive.followTrajectoryAsync(trajectoryForward);
-        step = 1; // Move to next step
-        stepStartTime = getRuntime();
+        // No manual step = 1 here—StateMachine does that for us
     }
 
     @Override
     public void loop() {
-        // Update Road Runner
-        drive.update();
+        // Update the StateMachine each loop
+        stateMachine.update();
 
-        // Step 1: Wait for trajectoryForward to finish
-        if (step == 1 && !drive.isBusy()) {
-            // Move arm slightly up and out
-
-            setArmLength(4);
-            stepStartTime = getRuntime();
-            step = 2;
-        }
-
-        // Step 2: Wait ~0.2 seconds, then start trajectoryTwo
-        if (step == 2 && getRuntime() - stepStartTime > WAIT_TIME) {
-            drive.followTrajectoryAsync(trajectoryTwo);
-            step = 3;
-        }
-
-        // Step 3: Wait for trajectoryTwo to finish
-        if (step == 3 && !drive.isBusy()) {
-            // Adjust arm length for drop
-            setArmLength(1.5);
-            stepStartTime = getRuntime();
-            step = 4;
-        }
-
-        // Step 4: Wait ~0.2 seconds
-        if (step == 4 && getRuntime() - stepStartTime > 2) {
-            // Close the claw
-            armClaw.setPosition(0.2);
-            stepStartTime = getRuntime();
-            step = 5;
-        }
-
-        // Step 5: Wait ~0.2 seconds, then pull arm down before trajectory 3
-        if (step == 5 && getRuntime() - stepStartTime > WAIT_TIME) {
-            setArmAngle(0);
-            stepStartTime = getRuntime();
-            step = 6;
-        }
-
-        // Step 6: Wait ~0.2 seconds for arm to move down
-        if (step == 6 && getRuntime() - stepStartTime > WAIT_TIME) {
-            // Start trajectoryThree
-            drive.followTrajectoryAsync(trajectoryThree);
-            step = 7;
-        }
-
-        // Step 7: Wait for trajectoryThree to finish
-        if (step == 7 && !drive.isBusy()) {
-
-            drive.followTrajectoryAsync(trajectoryFour);
-            // Retract arm and open claw
-            setArmLength(-100); // will clamp to 0
-            setArmAngle(0);
-            armClaw.setPosition(0);
-            step = 8;
-        }
-
-        // Step 8: Done
-        // No further actions needed.
-
-        telemetry.addData("Step", step);
+        // Show some status
+        telemetry.addData("IsFinished?", stateMachine.isFinished());
         telemetry.addData("Arm Ext. Ticks", armExtensionMotor.getCurrentPosition());
         telemetry.addData("Arm Rot. Ticks", armRotationMotor.getCurrentPosition());
         telemetry.update();

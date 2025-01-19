@@ -44,18 +44,18 @@ public class RightSampleAuto extends OpMode {
 
         // Build trajectories
         trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(18, 55), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(18, 40 ), Math.toRadians(0))
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(11)
+                .forward(16)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(new Pose2d())
                 .back(31)
                 .build();
         trajectoryFour = drive.trajectoryBuilder(new Pose2d())
-                .strafeLeft(85)
+                .strafeRight(85)
                 .build();
 
         // --- Add states to the StateMachine ---
@@ -82,7 +82,8 @@ public class RightSampleAuto extends OpMode {
         stateMachine.addState(new TimedState(this,0.2) {
             @Override
             public void onStart() {
-                setArmLength(4);
+                setArmLength(3.6);
+                armClaw.setPosition(0);
             }
         });
 
@@ -105,7 +106,7 @@ public class RightSampleAuto extends OpMode {
         });
 
         // 4) Adjust arm length (and wait ~2s)
-        stateMachine.addState(new TimedState(this,2.0) {
+        stateMachine.addState(new TimedState(this,3.0) {
             @Override
             public void onStart() {
                 setArmLength(1.5);
@@ -156,10 +157,29 @@ public class RightSampleAuto extends OpMode {
                 armClaw.setPosition(0);
             }
             @Override
-            public void run() { /* do nothing */ drive.followTrajectoryAsync(trajectoryFour); }
+            public void run() { /* do nothing */ }
             @Override
             public boolean isDone() { return !drive.isBusy(); }
         });
+
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryFour);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+
 
         telemetry.addData("Status", "Initialized");
     }
