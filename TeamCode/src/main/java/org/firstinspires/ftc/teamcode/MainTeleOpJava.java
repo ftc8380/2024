@@ -11,12 +11,14 @@ import java.util.Arrays;
 import java.util.List;
 
 @TeleOp
-public class MainTeleOpJava extends OpMode {
+public class  MainTeleOpJava extends OpMode {
     // Declare hardware variables
     private DcMotor motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor;
     private DcMotorSimple hangingArm;
     private BNO055IMU imu;
     private Servo armClaw;
+
+    private Servo tensionServo;
 
     // Variables for scaling and gamepad state
     private double[] speedModes = {0.3, 0.55, 0.8, 1.0};
@@ -118,8 +120,10 @@ public class MainTeleOpJava extends OpMode {
         if (gamepad2.b) {
             armClaw.setPosition(0.3);
         }
-
-
+        if (armExtensionMotor.getCurrentPosition() >= 1750){
+            tensionServo.setPosition(0.35);
+        }
+        else tensionServo.setPosition(0.10);
         // HANGING
         if (gamepad1.a){
             hangingArm.setPower(1);
