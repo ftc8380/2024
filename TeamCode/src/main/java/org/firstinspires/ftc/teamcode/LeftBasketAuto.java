@@ -50,32 +50,32 @@ public class LeftBasketAuto extends OpMode {
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Build trajectories
-        startToBasket = drive.trajectoryBuilder(new Pose2d(36, 64, -90))
+        startToBasket = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .splineTo(new Vector2d(9, 20), Math.toRadians(45))
                 .build();
 
         forward = drive.trajectoryBuilder(startToBasket.end())
                 .strafeTo(new Vector2d(-3,-3))
                 .build();
-        backward = drive.trajectoryBuilder(new Pose2d()).back(5).build();
+        backward = drive.trajectoryBuilder(forward.end()).back(5).build();
 
-        grabOne = drive.trajectoryBuilder(new Pose2d())
+        grabOne = drive.trajectoryBuilder(backward.end())
                 .splineTo(new Vector2d(30, -15), Math.toRadians(-135))
                 .build();
 
-        grabTwo = drive.trajectoryBuilder(new Pose2d())
+        grabTwo = drive.trajectoryBuilder(grabOne.end())
                 .splineTo(new Vector2d(30, -9), Math.toRadians(135))
                 .build();
 
-        secondBasket = drive.trajectoryBuilder(new Pose2d())
+        secondBasket = drive.trajectoryBuilder(grabTwo.end())
                 .splineTo(new Vector2d(-30, 15), Math.toRadians(135))
                 .build();
 
-        thirdBasket = drive.trajectoryBuilder(new Pose2d())
+        thirdBasket = drive.trajectoryBuilder(secondBasket.end())
                 .splineTo(new Vector2d(-30, 9), Math.toRadians(135))
                 .build();
 
-        finalBackwards = drive.trajectoryBuilder(new Pose2d())
+        finalBackwards = drive.trajectoryBuilder(thirdBasket.end())
                 .splineTo(new Vector2d(5, 0), Math.toRadians(-135))
                 .build();
 

@@ -40,6 +40,7 @@ public class  MainTeleOpJava extends OpMode {
         armRotationMotor = hardwareMap.get(DcMotor.class, "arm_rotation");
         armExtensionMotor = hardwareMap.get(DcMotor.class, "arm_extension");
         hangingArm = hardwareMap.get(DcMotor.class, "hanging");
+        tensionServo = hardwareMap.get(Servo.class, "tension");
 
         armClaw.scaleRange(-0.1, 0.1);
 
