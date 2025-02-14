@@ -19,6 +19,21 @@ import org.firstinspires.ftc.teamcode.util.TimedState;
 @Autonomous(group = "drive")
 public class LeftBasketAuto extends OpMode {
 
+    // CONFIG VARIABLES FOR TRAJECTORIES
+    // Starting Pose
+    public static double startPoseX = 36;
+    public static double startPoseY = 60;
+    public static double startPoseHeadingDeg = -90;
+
+    // Basket Target Pose (for the spline)
+    public static double basketX = 48;
+    public static double basketY = 48;
+    public static double basketSplineHeadingDeg = 45;
+
+    // Distances for forward and backward movements (in inches or your field unit)
+    public static double forwardDistance = 4.5;
+    public static double backwardDistance = 5.0;
+
     private MecanumDrive drive;
 
     private DcMotor armRotationMotor;
@@ -28,20 +43,14 @@ public class LeftBasketAuto extends OpMode {
     private Trajectory startToBasket;
     private Trajectory forward;
     private Trajectory backward;
-    private Trajectory grabOne;
-    private Trajectory grabTwo;
-    private Trajectory secondBasket;
-    private Trajectory thirdBasket;
-    private Trajectory finalBackwards;
-
     // Our single, simple state machine
     private StateMachine stateMachine = new StateMachine();
 
     @Override
     public void init() {
-        // Hardware
+        // Hardware initialization
         drive = new MecanumDrive(hardwareMap);
-        drive.setPoseEstimate(new Pose2d(36, 64, -90));
+        drive.setPoseEstimate(new Pose2d(startPoseX, startPoseY, Math.toRadians(startPoseHeadingDeg)));
         armRotationMotor = hardwareMap.get(DcMotor.class, "arm_rotation");
         armExtensionMotor = hardwareMap.get(DcMotor.class, "arm_extension");
         armClaw = hardwareMap.get(Servo.class, "claw_grab");
@@ -49,44 +58,45 @@ public class LeftBasketAuto extends OpMode {
         armRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Build trajectories
+        // Set servo scale range to 0.0 to 0.05
+        armClaw.scaleRange(0.0, 0.05);
+
+        // Build trajectory from start to basket (spline)
         startToBasket = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .splineTo(new Vector2d(9, 20), Math.toRadians(45))
+                .splineTo(new Vector2d(basketX, basketY), Math.toRadians(basketSplineHeadingDeg))
                 .build();
 
-        forward = drive.trajectoryBuilder(startToBasket.end())
-                .strafeTo(new Vector2d(-3,-3))
-                .build();
-        backward = drive.trajectoryBuilder(forward.end()).back(5).build();
+        // Calculate the forward target pose (robot-relative forward)
+        Pose2d currentPoseAfterSpline = startToBasket.end();
+        double heading = currentPoseAfterSpline.getHeading();
+        double forwardTargetX = currentPoseAfterSpline.getX() + forwardDistance * Math.cos(heading);
+        double forwardTargetY = currentPoseAfterSpline.getY() + forwardDistance * Math.sin(heading);
+        Pose2d forwardTargetPose = new Pose2d(forwardTargetX, forwardTargetY, heading);
 
-        grabOne = drive.trajectoryBuilder(backward.end())
-                .splineTo(new Vector2d(30, -15), Math.toRadians(-135))
-                .build();
-
-        grabTwo = drive.trajectoryBuilder(grabOne.end())
-                .splineTo(new Vector2d(30, -9), Math.toRadians(135))
-                .build();
-
-        secondBasket = drive.trajectoryBuilder(grabTwo.end())
-                .splineTo(new Vector2d(-30, 15), Math.toRadians(135))
+        // Build forward trajectory using an absolute target pose
+        forward = drive.trajectoryBuilder(currentPoseAfterSpline)
+                .lineToLinearHeading(forwardTargetPose)
                 .build();
 
-        thirdBasket = drive.trajectoryBuilder(secondBasket.end())
-                .splineTo(new Vector2d(-30, 9), Math.toRadians(135))
-                .build();
+        // Calculate the backward target pose (robot-relative backward)
+        Pose2d currentPoseAfterForward = forward.end();
+        double backwardTargetX = currentPoseAfterForward.getX() - backwardDistance * Math.cos(heading);
+        double backwardTargetY = currentPoseAfterForward.getY() - backwardDistance * Math.sin(heading);
+        Pose2d backwardTargetPose = new Pose2d(backwardTargetX, backwardTargetY, heading);
 
-        finalBackwards = drive.trajectoryBuilder(thirdBasket.end())
-                .splineTo(new Vector2d(5, 0), Math.toRadians(-135))
+        // Build backward trajectory using an absolute target pose
+        backward = drive.trajectoryBuilder(currentPoseAfterForward)
+                .lineToLinearHeading(backwardTargetPose)
                 .build();
 
         //---------------------------------------------------------------------------------------
-        // Now define each “step” as a State and chain them in order.
+        // Define each “step” as a State and chain them in order.
         //---------------------------------------------------------------------------------------
 
-        // 1) Drive from start to basket
+        // 1) Drive from start to basket (spline path)
         stateMachine.addState(new TrajectoryState(drive, startToBasket));
 
-        // 2) Extend arm to ~5 rotations until extension >= 1900
+        // 2) Extend arm to ~5 rotations until extension >= 1900 ticks
         stateMachine.addState(new State() {
             @Override
             public void init() {
@@ -100,21 +110,21 @@ public class LeftBasketAuto extends OpMode {
             }
         });
 
-        // 3) Drive forward
+        // 3) Drive forward (robot-relative, computed as an absolute pose)
         stateMachine.addState(new TrajectoryState(drive, forward));
 
-        // 4) Close the claw (wait ~0.2s)
-        stateMachine.addState(new TimedState(this, 0.2) {
+        // 4) Close the claw (wait ~0.2s) by setting the servo to 0.0 (within the scaled range)
+        stateMachine.addState(new TimedState(LeftBasketAuto.this, 0.2) {
             @Override
             public void onStart() {
-                armClaw.setPosition(0.2);
+                armClaw.setPosition(0.0);
             }
         });
 
-        // 5) Drive backward
+        // 5) Drive backward (computed absolute pose)
         stateMachine.addState(new TrajectoryState(drive, backward));
 
-        // 6) Set arm length to 0 until extension <= 100
+        // 6) Retract the arm to 0 until extension <= 100 ticks
         stateMachine.addState(new State() {
             @Override
             public void init() {
@@ -128,212 +138,23 @@ public class LeftBasketAuto extends OpMode {
             }
         });
 
-        // 7) Drive to grabOne
-        stateMachine.addState(new TrajectoryState(drive, grabOne));
-
-        // 8) Set arm angle to 0.2 (no wait needed, so we can do it quickly)
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmAngle(0.2);
-            }
-            @Override
-            public void run() { }
-            @Override
-            public boolean isDone() {
-                return true; // done immediately
-            }
-        });
-
-        // 9) Wait 0.2s, then set claw to 0 (grab)
-        stateMachine.addState(new TimedState(this, 0.2) {
-            @Override
-            public void onStart() {
-                armClaw.setPosition(0);
-            }
-        });
-
-        // 10) Return arm angle to 0
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmAngle(0);
-            }
-            @Override
-            public void run() { }
-            @Override
-            public boolean isDone() {
-                // If you want to wait until it actually finishes, check motor pos
-                return true;
-            }
-        });
-
-        // 11) Drive to secondBasket
-        stateMachine.addState(new TrajectoryState(drive, secondBasket));
-
-        // 12) Extend arm to 5
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmLength(5);
-            }
-            @Override
-            public void run() { }
-            @Override
-            public boolean isDone() {
-                // If you want a threshold, check extension or return true immediately
-                return true;
-            }
-        });
-
-        // 13) Drive forward
-        stateMachine.addState(new TrajectoryState(drive, forward));
-
-        // 14) Close claw, then drive backward
-        stateMachine.addState(new State() {
-            private boolean doneClaw = false;
-            @Override
-            public void init() {
-                // Close claw
-                armClaw.setPosition(0.2);
-                // Immediately start backward trajectory
-                drive.followTrajectoryAsync(backward);
-            }
-            @Override
-            public void run() {
-                drive.update();
-                if (!drive.isBusy()) doneClaw = true;
-            }
-            @Override
-            public boolean isDone() {
-                return doneClaw;
-            }
-        });
-
-        // 15) Arm length to 0
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmLength(0);
-            }
-            @Override
-            public void run() {}
-            @Override
-            public boolean isDone() { return true; }
-        });
-
-        // 16) Drive to grabTwo
-        stateMachine.addState(new TrajectoryState(drive, grabTwo));
-
-        // 17) Lift arm angle to 0.2, claw near 0.2
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmAngle(0.2);
-                armClaw.setPosition(0.2);
-            }
-            @Override
-            public void run() {}
-            @Override
-            public boolean isDone() {
-                // Wait until angle is at 0.2? For simplicity just do:
-                return true;
-            }
-        });
-
-        // 18) Claw to 0 (grab)
-        stateMachine.addState(new TimedState(this, 0.2) {
-            @Override
-            public void onStart() {
-                armClaw.setPosition(0);
-            }
-        });
-
-        // 19) Arm angle to 0
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmAngle(0);
-            }
-            @Override
-            public void run() {}
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-        });
-
-        // 20) Drive to thirdBasket
-        stateMachine.addState(new TrajectoryState(drive, thirdBasket));
-
-        // 21) Arm length to 5
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmLength(5);
-            }
-            @Override
-            public void run() {}
-            @Override
-            public boolean isDone() {
-                return true;
-            }
-        });
-
-        // 22) Drive forward
-        stateMachine.addState(new TrajectoryState(drive, forward));
-
-        // 23) Claw close, then drive backward
-        stateMachine.addState(new State() {
-            private boolean doneBack = false;
-            @Override
-            public void init() {
-                armClaw.setPosition(0.2);
-                drive.followTrajectoryAsync(backward);
-            }
-            @Override
-            public void run() {
-                drive.update();
-                if (!drive.isBusy()) doneBack = true;
-            }
-            @Override
-            public boolean isDone() {
-                return doneBack;
-            }
-        });
-
-        // 24) Arm length to 0
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                setArmLength(0);
-            }
-            @Override
-            public void run() {}
-            @Override
-            public boolean isDone() { return true; }
-        });
-
-        // 25) Drive finalBackwards (end)
-        stateMachine.addState(new TrajectoryState(drive, finalBackwards));
-
         telemetry.addData("Status", "Initialized");
     }
 
     @Override
     public void init_loop() {
-        // If needed
+        // Optional: Code to run repeatedly during the init phase
     }
 
     @Override
     public void start() {
-        // We do nothing special here. The StateMachine starts at state #0 automatically.
+        // The StateMachine starts at state #0 automatically.
     }
 
     @Override
     public void loop() {
         // Let the state machine handle everything
-        stateMachine.update(this);
+        stateMachine.update();
 
         // Telemetry
         telemetry.addData("Machine Done?", stateMachine.isFinished());
@@ -346,8 +167,8 @@ public class LeftBasketAuto extends OpMode {
     // Helper methods for arm/claw
     //-------------------------------------------------------------------------
     private void setArmLength(double rotations) {
-        int ticks = (int)(384.5 * rotations);
-        // clamp ticks between 0 and 2400
+        int ticks = (int) (384.5 * rotations);
+        // Clamp ticks between 0 and 2400
         ticks = Math.max(0, Math.min(ticks, 2400));
         armExtensionMotor.setTargetPosition(ticks);
         armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -355,8 +176,8 @@ public class LeftBasketAuto extends OpMode {
     }
 
     private void setArmAngle(double rotations) {
-        int ticks = (int)(5281.1 * rotations);
-        // clamp ticks between 0 and 1050
+        int ticks = (int) (5281.1 * rotations);
+        // Clamp ticks between 0 and 1050
         ticks = Math.max(0, Math.min(ticks, 1050));
         armRotationMotor.setTargetPosition(ticks);
         armRotationMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
