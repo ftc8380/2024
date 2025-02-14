@@ -84,39 +84,29 @@ class LocalizedDriveTeleOp : OpMode() {
     }
 
     override fun loop() {
-        // Update the localization from Roadrunner.
+        // Update localization
         drive!!.update()
 
-        // --- Read gamepad inputs ---
-        // Use left stick for field-oriented translation.
-        // Note: In many FTC conventions, pushing the left stick forward yields negative Y,
-        // so here we reverse the Y-axis.
-        var translationX = -gamepad1.left_stick_y.toDouble() // forward/backward component
-        val translationY = gamepad1.left_stick_x.toDouble() // left/right component
+        // Read gamepad inputs (field-oriented)
+        val forward = -gamepad1.left_stick_y.toDouble() // forward/backward
+        val strafe = -gamepad1.left_stick_x.toDouble() // left/right
+        val turn = -gamepad1.right_stick_x.toDouble() // rotation
 
-        // Additionally, use triggers for forward/backward motion independent of heading.
-        // Right trigger adds forward power; left trigger adds backward power.
-        translationX += (gamepad1.right_trigger - gamepad1.left_trigger).toDouble()
+        // Add trigger-based movement for more controlled speed adjustment
+        val forward_adjustment = (gamepad1.right_trigger - gamepad1.left_trigger).toDouble()
 
-        // Use right stick X axis for rotation.
-        val rotation = gamepad1.right_stick_x.toDouble()
+        // Combine the field-oriented movement
+        val adjustedForward = forward + forward_adjustment
 
-        // Create a field-oriented input vector.
-        val fieldInput = Pose2d(translationX, translationY, rotation)
+        // Directly pass the weighted drive power
+        drive!!.setWeightedDrivePower(Pose2d(adjustedForward, strafe, turn))
 
-        // Since the drive expects robot-relative commands, rotate the field input by
-        // the negative of the current heading.
-        val currentPose: Pose2d = drive!!.poseEstimate
-        val robotRelativeInput: Pose2d = fieldInput.rotated(-currentPose.heading)
-
-        // Pass the computed power to the drive.
-        drive!!.setWeightedDrivePower(robotRelativeInput)
-
-        // --- Telemetry: Display current pose ---
-        telemetry.addData("Pose", currentPose.toString())
-        telemetry.addData("X (in)", currentPose.x)
-        telemetry.addData("Y (in)", currentPose.y)
-        telemetry.addData("Heading (deg)", Math.toDegrees(currentPose.heading))
+        // Telemetry for debugging
+        val currentPose = drive!!.poseEstimate
+        telemetry.addData("Pose", currentPose)
+        telemetry.addData("X", currentPose.x)
+        telemetry.addData("Y", currentPose.y)
+        telemetry.addData("Heading", Math.toDegrees(currentPose.heading))
         telemetry.update()
     }
 
