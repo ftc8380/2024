@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.util.TimedState;
 
 @Config
 @Autonomous(group = "drive")
-public class RightSampleAuto extends OpMode {
+public class RightMultiSample extends OpMode {
 
     private MecanumDrive drive;
     private DcMotor armRotationMotor;
@@ -27,6 +27,8 @@ public class RightSampleAuto extends OpMode {
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
     private Trajectory trajectoryFour;
+
+    private Pose2d startPose;
 
     // Our minimal state machine
     private StateMachine stateMachine = new StateMachine();
@@ -42,20 +44,23 @@ public class RightSampleAuto extends OpMode {
         armRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        armClaw.scaleRange(0.0, 0.05);
+
         // Build trajectories
-        trajectoryForward = drive.trajectoryBuilder(new Pose2d())
-                .splineToConstantHeading(new Vector2d(18, 40 ), Math.toRadians(0))
+        drive.setPoseEstimate(new Pose2d(24, (-72+(17.375/2)), Math.toRadians(90)));
+        trajectoryForward = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .splineTo(new Vector2d(0,-32),Math.toRadians(90))
                 .build();
 
-        trajectoryTwo = drive.trajectoryBuilder(new Pose2d())
-                .forward(16)
+        trajectoryTwo = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .forward(4)
                 .build();
 
-        trajectoryThree = drive.trajectoryBuilder(new Pose2d())
+        trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .back(31)
                 .build();
-        trajectoryFour = drive.trajectoryBuilder(new Pose2d())
-                .strafeRight(85)
+        trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .strafeRight(45)
                 .build();
 
         // --- Add states to the StateMachine ---
@@ -83,7 +88,7 @@ public class RightSampleAuto extends OpMode {
             @Override
             public void onStart() {
                 setArmLength(3.6);
-                armClaw.setPosition(0.9);
+                armClaw.setPosition(0);
             }
         });
 
@@ -117,15 +122,7 @@ public class RightSampleAuto extends OpMode {
         stateMachine.addState(new TimedState(this,0.2) {
             @Override
             public void onStart() {
-                armClaw.setPosition(0.2);
-            }
-        });
-
-        // 6) Move arm down (and wait ~0.2s)
-        stateMachine.addState(new TimedState(this,0.2) {
-            @Override
-            public void onStart() {
-                setArmAngle(0);
+                armClaw.setPosition(0);
             }
         });
 
@@ -154,7 +151,6 @@ public class RightSampleAuto extends OpMode {
 
                 setArmLength(-100);
                 setArmAngle(0);
-                armClaw.setPosition(0);
             }
             @Override
             public void run() { /* do nothing */ }
