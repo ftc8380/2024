@@ -12,7 +12,7 @@ class TensionServoControl : OpMode() {
     private var tensionServo: Servo? = null
 
     // Servo position variables
-    private var servoPosition = 0.5 // Initialize to mid-position
+    private var servoPosition = 0.0 // Initialize to mid-position
 
     // Variables for debounce logic
     private var previousAState = false
@@ -20,7 +20,8 @@ class TensionServoControl : OpMode() {
 
     override fun init() {
         // Initialize the servo from the hardware map
-        tensionServo = hardwareMap.get(Servo::class.java, "tensionServo")
+        tensionServo = hardwareMap.get(Servo::class.java, "claw_grab")
+        tensionServo!!.scaleRange(0.0, 0.05)
 
 
         // Set initial servo position
