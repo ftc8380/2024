@@ -42,12 +42,11 @@ public class LeftBasketAuto extends OpMode {
     private DcMotor armRotationMotor;
     private DcMotor armExtensionMotor;
     private Servo armClaw;
+    private Servo tensionServo;
 
     private Trajectory startToBasket;
     private Trajectory forward;
     private Trajectory backward;
-    // New trajectory for turning in place to -90° (will be built later)
-    private Trajectory turnToMinus90;
 
     // Our single, simple state machine
     private StateMachine stateMachine = new StateMachine();
@@ -60,6 +59,7 @@ public class LeftBasketAuto extends OpMode {
         armRotationMotor = hardwareMap.get(DcMotor.class, "arm_rotation");
         armExtensionMotor = hardwareMap.get(DcMotor.class, "arm_extension");
         armClaw = hardwareMap.get(Servo.class, "claw_grab");
+        tensionServo = hardwareMap.get(Servo.class, "tension");
 
         armRotationMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtensionMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -108,6 +108,7 @@ public class LeftBasketAuto extends OpMode {
             public void init() {
                 // Use the configurable arm length here.
                 setArmLength(armLengthRotations);
+                tensionServo.setPosition(0.35);
             }
             @Override
             public void run() { /* do nothing */ }
