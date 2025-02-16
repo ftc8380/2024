@@ -34,6 +34,9 @@ public class LeftBasketAuto extends OpMode {
     public static double forwardDistance = 4.5;
     public static double backwardDistance = 5.0;
 
+    // CONFIG VARIABLE FOR ARM LENGTH (in rotations)
+    public static double armLengthRotations = 5.0;
+
     private MecanumDrive drive;
 
     private DcMotor armRotationMotor;
@@ -61,7 +64,7 @@ public class LeftBasketAuto extends OpMode {
         // Set servo scale range to 0.0 to 0.05
         armClaw.scaleRange(0.0, 0.05);
 
-        // Build trajectory from start to basket (spline)
+        // Build trajectory from start to basket (spline path)
         startToBasket = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .splineTo(new Vector2d(basketX, basketY), Math.toRadians(basketSplineHeadingDeg))
                 .build();
@@ -96,17 +99,18 @@ public class LeftBasketAuto extends OpMode {
         // 1) Drive from start to basket (spline path)
         stateMachine.addState(new TrajectoryState(drive, startToBasket));
 
-        // 2) Extend arm to ~5 rotations until extension >= 1900 ticks
+        // 2) Extend arm to the configured rotations (e.g., 5 rotations) until extension >= 1900 ticks
         stateMachine.addState(new State() {
             @Override
             public void init() {
-                setArmLength(5);
+                // Use the configurable arm length here.
+                setArmLength(armLengthRotations);
             }
             @Override
             public void run() { /* do nothing */ }
             @Override
             public boolean isDone() {
-                return armExtensionMotor.getCurrentPosition() >= 1900;
+                return armExtensionMotor.getCurrentPosition() >= armLengthRotations * 384.5;
             }
         });
 
