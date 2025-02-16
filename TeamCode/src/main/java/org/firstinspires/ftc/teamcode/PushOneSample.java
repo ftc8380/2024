@@ -234,7 +234,7 @@ public class PushOneSample extends OpMode {
     @Override
     public void loop() {
         // Update the StateMachine each loop
-        stateMachine.update(this);
+        stateMachine.update();
 
         // Show some status
         telemetry.addData("IsFinished?", stateMachine.isFinished());

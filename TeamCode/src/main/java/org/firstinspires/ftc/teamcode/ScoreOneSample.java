@@ -29,6 +29,7 @@ public class ScoreOneSample extends OpMode {
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
 
+    private Trajectory trajectoryThreeAndAHalf;
     private Trajectory trajectoryFour;
 
     private Trajectory trajectoryFive;
@@ -78,6 +79,9 @@ public class ScoreOneSample extends OpMode {
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .back(5)
+
+                .build();
+        trajectoryThreeAndAHalf = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .strafeTo(new Vector2d(36, -36))
                 .build();
         trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
@@ -179,6 +183,23 @@ public class ScoreOneSample extends OpMode {
             @Override
             public void init() {
                 drive.followTrajectoryAsync(trajectoryThree);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+        // 6.5) Drive forward third trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryThreeAndAHalf);
             }
 
             @Override
@@ -429,7 +450,7 @@ public class ScoreOneSample extends OpMode {
     @Override
     public void loop() {
         // Update the StateMachine each loop
-        stateMachine.update(this);
+        stateMachine.update();
 
         // Show some status
         telemetry.addData("IsFinished?", stateMachine.isFinished());
