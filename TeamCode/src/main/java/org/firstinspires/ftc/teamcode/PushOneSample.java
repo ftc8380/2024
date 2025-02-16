@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.util.TimedState;
 
 @Config
 @Autonomous(group = "drive")
-public class RightMultiSample extends OpMode {
+public class PushOneSample extends OpMode {
 
     private MecanumDrive drive;
     private DcMotor armRotationMotor;
@@ -26,6 +26,12 @@ public class RightMultiSample extends OpMode {
     private Trajectory trajectoryForward;
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
+
+    private Trajectory trajectoryFour;
+
+    private Trajectory trajectoryFive;
+
+    private Trajectory trajectorySix;
 
 
     private Pose2d startPose;
@@ -58,9 +64,17 @@ public class RightMultiSample extends OpMode {
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .back(5)
-                .splineTo(new Vector2d(48, -60), Math.toRadians(90))
-//
+                .strafeTo(new Vector2d(36, -36))
                 .build();
+        trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .splineTo(new Vector2d(36,-8.7),0)
+                        .build();
+        trajectoryFive = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .strafeTo(new Vector2d(42,-8.7))
+                        .build();
+        trajectorySix = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .strafeTo(new Vector2d(42, 12))
+                        .build();
 
 
 
@@ -130,7 +144,7 @@ public class RightMultiSample extends OpMode {
             }
         });
 
-        // 6) Drive forward second trajectory
+        // 6) Drive forward third trajectory
         stateMachine.addState(new State() {
             @Override
             public void init() {
@@ -147,6 +161,62 @@ public class RightMultiSample extends OpMode {
                 return !drive.isBusy();
             }
         });
+
+        // 7) Drive forward fourth trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryFour);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+        // 8) Drive forward fifth trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryFive);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+        // 8) Drive forward sixth trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectorySix);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
+
 
         telemetry.addData("Status", "Initialized");
     }
