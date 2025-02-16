@@ -27,6 +27,8 @@ public class RightMultiSample extends OpMode {
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
 
+    private Trajectory trajectoryFour;
+
 
     private Pose2d startPose;
 
@@ -53,14 +55,17 @@ public class RightMultiSample extends OpMode {
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .forward(4)
+                .strafeTo(new Vector2d(0,-26))
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .back(5)
-                .splineTo(new Vector2d(48, -60), Math.toRadians(90))
+                .strafeTo(new Vector2d(0,-38))
+
 //
                 .build();
+        trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
+                .strafeTo(new Vector2d(48, -60))
+                        .build();
 
 
 
@@ -148,6 +153,24 @@ public class RightMultiSample extends OpMode {
             }
         });
 
+        // 7) Drive forward second trajectory
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+                drive.followTrajectoryAsync(trajectoryFour);
+            }
+
+            @Override
+            public void run() {
+                drive.update();
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
+            }
+        });
+
         telemetry.addData("Status", "Initialized");
     }
 
@@ -164,7 +187,7 @@ public class RightMultiSample extends OpMode {
     @Override
     public void loop() {
         // Update the StateMachine each loop
-        stateMachine.update(this);
+        stateMachine.update();
 
         // Show some status
         telemetry.addData("IsFinished?", stateMachine.isFinished());
