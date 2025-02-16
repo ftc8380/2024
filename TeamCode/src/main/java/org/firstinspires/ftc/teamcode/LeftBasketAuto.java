@@ -22,7 +22,7 @@ public class LeftBasketAuto extends OpMode {
     // CONFIG VARIABLES FOR TRAJECTORIES
     // Starting Pose
     public static double startPoseX = 36;
-    public static double startPoseY = 60;
+    public static double startPoseY = 66;
     public static double startPoseHeadingDeg = -90;
 
     // Basket Target Pose (for the spline)
@@ -31,11 +31,11 @@ public class LeftBasketAuto extends OpMode {
     public static double basketSplineHeadingDeg = 45;
 
     // Distances for forward and backward movements (in inches or your field unit)
-    public static double forwardDistance = 4.5;
-    public static double backwardDistance = 5.0;
+    public static double forwardDistance = 17.5;
+    public static double backwardDistance = 10.0;
 
     // CONFIG VARIABLE FOR ARM LENGTH (in rotations)
-    public static double armLengthRotations = 5.0;
+    public static double armLengthRotations = 15.0;
 
     private MecanumDrive drive;
 
@@ -46,6 +46,9 @@ public class LeftBasketAuto extends OpMode {
     private Trajectory startToBasket;
     private Trajectory forward;
     private Trajectory backward;
+    // New trajectory for turning in place to -90° (will be built later)
+    private Trajectory turnToMinus90;
+
     // Our single, simple state machine
     private StateMachine stateMachine = new StateMachine();
 
@@ -99,7 +102,7 @@ public class LeftBasketAuto extends OpMode {
         // 1) Drive from start to basket (spline path)
         stateMachine.addState(new TrajectoryState(drive, startToBasket));
 
-        // 2) Extend arm to the configured rotations (e.g., 5 rotations) until extension >= 1900 ticks
+        // 2) Extend arm to the configured rotations (e.g., 5 rotations) until extension >= 2000 ticks
         stateMachine.addState(new State() {
             @Override
             public void init() {
@@ -110,7 +113,7 @@ public class LeftBasketAuto extends OpMode {
             public void run() { /* do nothing */ }
             @Override
             public boolean isDone() {
-                return armExtensionMotor.getCurrentPosition() >= armLengthRotations * 384.5;
+                return armExtensionMotor.getCurrentPosition() >= 2000;
             }
         });
 
@@ -139,6 +142,25 @@ public class LeftBasketAuto extends OpMode {
             @Override
             public boolean isDone() {
                 return armExtensionMotor.getCurrentPosition() <= 100;
+            }
+        });
+
+        // 7) Turn to -90° heading.
+        // Build a trajectory that keeps the same x and y but changes the heading to -90°.
+        stateMachine.addState(new State() {
+            @Override
+            public void init() {
+
+            }
+
+            @Override
+            public void run() {
+                drive.turn(Math.toRadians(-135));
+            }
+
+            @Override
+            public boolean isDone() {
+                return !drive.isBusy();
             }
         });
 
@@ -172,8 +194,8 @@ public class LeftBasketAuto extends OpMode {
     //-------------------------------------------------------------------------
     private void setArmLength(double rotations) {
         int ticks = (int) (384.5 * rotations);
-        // Clamp ticks between 0 and 2400
-        ticks = Math.max(0, Math.min(ticks, 2400));
+        // Clamp ticks between 0 and 2600
+        ticks = Math.max(0, Math.min(ticks, 2600));
         armExtensionMotor.setTargetPosition(ticks);
         armExtensionMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armExtensionMotor.setPower(1.0);

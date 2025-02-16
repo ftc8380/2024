@@ -44,7 +44,7 @@ public class  MainTeleOpJava extends OpMode {
         hangingServo = hardwareMap.get(Servo.class, "hangingservo");
 
 
-        armClaw.scaleRange(-0.1, 0.1);
+        armClaw.scaleRange(0.0, 0.05);
 
         // Set all motors to run using encoders
         List<DcMotor> motors = Arrays.asList(
@@ -80,7 +80,7 @@ public class  MainTeleOpJava extends OpMode {
         //ARM ROTATION
         if (gamepad2.left_bumper) {
             //rotates arm down
-            armClaw.setPosition(0.3);
+            armClaw.setPosition(0.9);
             armRotationMotor.setTargetPosition(1100);
         }
         else if (gamepad2.left_trigger > 0.5) {
@@ -98,7 +98,7 @@ public class  MainTeleOpJava extends OpMode {
                 armExtensionMotor.setTargetPosition(755);
             }
             while(armClaw.getPosition() <= 0.28) {
-                armClaw.setPosition(0.3);
+                armClaw.setPosition(0.0);
             }
 
         }
@@ -109,7 +109,7 @@ public class  MainTeleOpJava extends OpMode {
 
         //ARM EXTENSION
         if (armRotationMotor.getCurrentPosition() < 250){
-            maxExtension = 2400;
+            maxExtension = 2600;
         }
         else maxExtension = 1100;
         if (gamepad2.right_stick_y != 0) {
@@ -121,7 +121,7 @@ public class  MainTeleOpJava extends OpMode {
             armClaw.setPosition(0);
         }
         if (gamepad2.b) {
-            armClaw.setPosition(0.3);
+            armClaw.setPosition(0.9);
         }
         if (armExtensionMotor.getCurrentPosition() >= 1750){
             tensionServo.setPosition(0.35);
