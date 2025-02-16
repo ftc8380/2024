@@ -26,7 +26,7 @@ public class RightMultiSample extends OpMode {
     private Trajectory trajectoryForward;
     private Trajectory trajectoryTwo;
     private Trajectory trajectoryThree;
-    private Trajectory trajectoryFour;
+
 
     private Pose2d startPose;
 
@@ -58,7 +58,7 @@ public class RightMultiSample extends OpMode {
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
                 .back(5)
-                .strafeTo(new Vector2d(36, -36))
+                .splineTo(new Vector2d(36, -36), 0.0)
 //                .splineTo(new Vector2d(36, -12), Math.toRadians(0))
 //                .lineToConstantHeading(new Vector2d(42.5, -12))
                 .build();
