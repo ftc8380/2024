@@ -57,11 +57,14 @@ public class RightMultiSample extends OpMode {
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .back(31)
+                .back(5)
+                .strafeTo(new Vector2d(36, -36))
+//                .splineTo(new Vector2d(36, -12), Math.toRadians(0))
+//                .lineToConstantHeading(new Vector2d(42.5, -12))
                 .build();
-        trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .strafeRight(45)
-                .build();
+
+
+
 
         // --- Add states to the StateMachine ---
 
@@ -84,11 +87,11 @@ public class RightMultiSample extends OpMode {
         });
 
         // 2) Raise arm a bit (and wait ~0.2s)
-        stateMachine.addState(new TimedState(this,0.2) {
+        stateMachine.addState(new TimedState(this,1.5) {
             @Override
             public void onStart() {
                 setArmLength(3.6);
-                armClaw.setPosition(0);
+                armClaw.setPosition(0.9);
             }
         });
 
@@ -111,7 +114,7 @@ public class RightMultiSample extends OpMode {
         });
 
         // 4) Adjust arm length (and wait ~2s)
-        stateMachine.addState(new TimedState(this,3.0) {
+        stateMachine.addState(new TimedState(this,1.2) {
             @Override
             public void onStart() {
                 setArmLength(1.5);
@@ -126,7 +129,7 @@ public class RightMultiSample extends OpMode {
             }
         });
 
-        // 7) Drive backward third trajectory
+        // 6) Drive forward second trajectory
         stateMachine.addState(new State() {
             @Override
             public void init() {
@@ -144,39 +147,6 @@ public class RightMultiSample extends OpMode {
             }
         });
 
-        // 8) Retract arm & open claw (done)
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-
-                setArmLength(-100);
-                setArmAngle(0);
-            }
-            @Override
-            public void run() { /* do nothing */ }
-            @Override
-            public boolean isDone() { return !drive.isBusy(); }
-        });
-
-        stateMachine.addState(new State() {
-            @Override
-            public void init() {
-                drive.followTrajectoryAsync(trajectoryFour);
-            }
-
-            @Override
-            public void run() {
-                drive.update();
-            }
-
-            @Override
-            public boolean isDone() {
-                return !drive.isBusy();
-            }
-        });
-
-
-
         telemetry.addData("Status", "Initialized");
     }
 
@@ -193,7 +163,7 @@ public class RightMultiSample extends OpMode {
     @Override
     public void loop() {
         // Update the StateMachine each loop
-        stateMachine.update();
+        stateMachine.update(this);
 
         // Show some status
         telemetry.addData("IsFinished?", stateMachine.isFinished());
