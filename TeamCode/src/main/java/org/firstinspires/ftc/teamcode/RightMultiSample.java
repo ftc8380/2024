@@ -55,16 +55,17 @@ public class RightMultiSample extends OpMode {
                 .build();
 
         trajectoryTwo = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .strafeTo(new Vector2d(0,-26))
+                .forward(6)
                 .build();
 
         trajectoryThree = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .strafeTo(new Vector2d(0,-38))
+                .back(30)
 
 //
                 .build();
         trajectoryFour = drive.trajectoryBuilder(drive.getPoseEstimate())
-                .strafeTo(new Vector2d(48, -60))
+                .strafeRight(48
+                        )
                         .build();
 
 
