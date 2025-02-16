@@ -17,7 +17,7 @@ public class  MainTeleOpJava extends OpMode {
     private DcMotorSimple hangingArm;
     private BNO055IMU imu;
     private Servo armClaw;
-
+    private Servo hangingServo;
     private Servo tensionServo;
 
     // Variables for scaling and gamepad state
@@ -41,6 +41,8 @@ public class  MainTeleOpJava extends OpMode {
         armExtensionMotor = hardwareMap.get(DcMotor.class, "arm_extension");
         hangingArm = hardwareMap.get(DcMotor.class, "hanging");
         tensionServo = hardwareMap.get(Servo.class, "tension");
+        hangingServo = hardwareMap.get(Servo.class, "hangingservo");
+
 
         armClaw.scaleRange(-0.1, 0.1);
 
@@ -87,13 +89,13 @@ public class  MainTeleOpJava extends OpMode {
         }
         else if (gamepad2.right_trigger > 0.5) {
             //sample goes up
-            armExtensionMotor.setTargetPosition(945);
+            armExtensionMotor.setTargetPosition(1260);
             armRotationMotor.setTargetPosition(0);
         }
         else if (gamepad2.right_bumper) {
             //sample goes down
-            while(armExtensionMotor.getCurrentPosition() >= 450) {
-                armExtensionMotor.setTargetPosition(440);
+            while(armExtensionMotor.getCurrentPosition() >= 770) {
+                armExtensionMotor.setTargetPosition(755);
             }
             while(armClaw.getPosition() <= 0.28) {
                 armClaw.setPosition(0.3);
@@ -133,7 +135,12 @@ public class  MainTeleOpJava extends OpMode {
             hangingArm.setPower(-1);
         }
         else hangingArm.setPower(0);
-
+        if (gamepad1.x){
+                hangingServo.setPosition(hangingServo.getPosition() + 0.1);
+            }
+        if (gamepad1.x){
+                hangingServo.setPosition(hangingServo.getPosition() - 0.1);
+            }
 
         // Overly complicated speed mode adjustment logic
         boolean currentDpadUp = gamepad1.dpad_up;
@@ -234,6 +241,7 @@ public class  MainTeleOpJava extends OpMode {
         telemetry.addData("Back Right Power", backRightPower);
         telemetry.addData("Speed Mode", speedScale);
         telemetry.addData("Heading", Math.toDegrees(botHeadingRadians));
+        telemetry.addData("Hanging Servo", hangingServo.getPosition());
         telemetry.update();
     }
 }
