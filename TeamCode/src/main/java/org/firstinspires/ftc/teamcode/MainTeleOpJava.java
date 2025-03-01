@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @TeleOp
-public class  MainTeleOpJava extends OpMode {
+public class MainTeleOpJava extends OpMode {
     // Declare hardware variables
     private DcMotor motorFrontLeft, motorBackLeft, motorFrontRight, motorBackRight, armRotationMotor, armExtensionMotor;
     private DcMotorSimple hangingArm;
